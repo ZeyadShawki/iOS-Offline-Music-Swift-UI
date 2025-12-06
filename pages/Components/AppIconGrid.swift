@@ -33,87 +33,17 @@ struct AppIconGrid: View {
 
 
 #Preview {
-    AppIconGrid(options: [
+    AppIconGrid(options:      (0..<6).map  { index in
         IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),       IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-        IconButtonOption(
-            title: "YouTube",
-            color: .red,
-            imageName: "youtube-logo",
-            action: {
-                print("YouTube selected")
-            }
-        ),
-    ]
+           title: "YouTube",
+           color: .red,
+           imageName: "youtube-logo",
+           action: {
+               print("YouTube \(index) selected")
+           },
+           searchEngine: .youtube
+        )
+    }
     )
         
 }

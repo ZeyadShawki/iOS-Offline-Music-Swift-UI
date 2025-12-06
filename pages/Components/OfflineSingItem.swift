@@ -15,7 +15,7 @@ struct OfflineSongItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 VStack(alignment: .leading, spacing: 4){
-                    Text(song.title).font(.system(size: 16,weight: .medium)).foregroundColor(.black).multilineTextAlignment(.trailing).lineLimit(1)
+                    Text(song.title).font(.system(size: 16,weight: .medium)).foregroundColor(.primary).multilineTextAlignment(.trailing).lineLimit(1)
                     HStack(spacing: 6,) {
                         Image(systemName: "music.note").foregroundColor(.orange)
                             .font(.system(size: 10))
@@ -23,17 +23,17 @@ struct OfflineSongItem: View {
                         // Artist Name (English)
                                               Text(song.artistNameEnglish)
                                                   .font(.system(size: 12))
-                                                  .foregroundColor(.gray)
+                                                  .foregroundColor(.secondary)
                                               
                                               // Separator
                                               Text("|")
                                                   .font(.system(size: 12))
-                                                  .foregroundColor(.gray)
+                                                  .foregroundColor(.secondary)
                                               
                                               // Duration
                                               Text(song.duration)
                                                   .font(.system(size: 12))
-                                                  .foregroundColor(.gray)
+                                                  .foregroundColor(.secondary)
                                               
                     }
                 }

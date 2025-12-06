@@ -11,14 +11,14 @@ struct OfflineSongsSection: View {
             HStack {
                 Text("Offline Songs")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                 
                 Spacer()
                 
                 Button(action: onMoreTap) {
                     Text("More")
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.primary)
                 }
             }
             .padding(.horizontal)
@@ -31,7 +31,7 @@ struct OfflineSongsSection: View {
                         .foregroundColor(.gray.opacity(0.5))
                     Text("No offline songs")
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)

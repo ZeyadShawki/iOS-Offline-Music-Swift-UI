@@ -7,22 +7,28 @@ struct ReusableTextField: View {
     var isSecure: Bool = false
     var keyboardType: UIKeyboardType = .default
     var buttonOptions: [IconButtonOption]? = []
-    @State private var selectedOption: IconButtonOption? = nil
-   
-    init(text:  Binding<String>, placeHolder: String, title: String? = nil, isSecure: Bool = false, keyboardType: UIKeyboardType = .default, buttonOptions: [IconButtonOption]? = nil, selectedOption: IconButtonOption? = nil) {
+    @Binding private var selectedOption: IconButtonOption?
+    var onSearch: (()->Void)? = nil
+    
+    
+    init(text:  Binding<String>, placeHolder: String, title: String? = nil, isSecure: Bool = false, keyboardType: UIKeyboardType = .default, buttonOptions: [IconButtonOption]? = nil, selectedOption: Binding<IconButtonOption?>,
+        onSearch:(()->Void)? = nil,
+    ) {
         self._text = text
         self.placeHolder = placeHolder
         self.title = title
         self.isSecure = isSecure
         self.keyboardType = keyboardType
         self.buttonOptions = buttonOptions
-        self.selectedOption = buttonOptions?.first ?? selectedOption
+        self._selectedOption = selectedOption
+        self.onSearch = onSearch
+
     }
     
     var body : some View {
         VStack(alignment: .leading,spacing: 8) {
             if let title = title {
-                Text(title).font(.caption).foregroundColor(.gray)
+                Text(title).font(.caption).foregroundColor(.secondary)
             }
             
             HStack {
@@ -54,9 +60,13 @@ struct ReusableTextField: View {
                 }
                 
                 if isSecure {
-                    SecureField(placeHolder,text: $text).keyboardType(keyboardType)
+                    SecureField(placeHolder,text: $text).keyboardType(keyboardType).onSubmit {
+                        onSearch?()
+                    }
                 }else{
-                    TextField(placeHolder,text: $text).keyboardType(keyboardType)
+                    TextField(placeHolder,text: $text).keyboardType(keyboardType).onSubmit {
+                        onSearch?()
+                    }
                 }
                 
             }
@@ -96,7 +106,8 @@ ReusableTextField(
             imageName: "youtube-logo", // Your asset image name
             action: {
                 print("YouTube option selected")
-            }
+            },
+            searchEngine: .youtube
         ),
         IconButtonOption(
             title: "Google",
@@ -104,8 +115,9 @@ ReusableTextField(
             imageName: "google-logo",
             action: {
                 print("Google option selected")
-            }
+            },
+            searchEngine: .google
         )
-    ]
+    ], selectedOption: .constant(nil)
 )
 }

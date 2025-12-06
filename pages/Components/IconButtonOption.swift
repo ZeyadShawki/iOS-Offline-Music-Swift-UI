@@ -1,12 +1,18 @@
 import SwiftUI
 
+
+enum SearchEngine: String {
+    case youtube = "YouTube"
+    case google = "Google"
+}
+
 struct IconButtonOption: Identifiable , Equatable ,Hashable{
     let id = UUID()
     let title: String
     let color: Color?
     let imageName: String?
     let action: () -> Void
-    
+    let searchEngine: SearchEngine
     static func == (lhs: IconButtonOption, rhs: IconButtonOption) -> Bool {
           return lhs.id == rhs.id &&
                  lhs.title == rhs.title &&
