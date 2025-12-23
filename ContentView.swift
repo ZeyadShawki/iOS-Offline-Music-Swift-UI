@@ -15,11 +15,8 @@ struct ContentView: View {
             DiscoveryPage(text: "").tabItem {
                 Label("Discovery",systemImage: "safari.fill")
             }
-            PlaylistPage().tabItem {
+            PlaylistPage(playlists: []).tabItem {
                 Label("PlayList",systemImage: "books.vertical.fill")
-            }
-            LibraryPage().tabItem {
-                Label("Library",systemImage: "document.fill")
             }
             SettingPage().tabItem {
                 Label("Setting",systemImage: "gear")
