@@ -31,7 +31,8 @@ struct PlayistRow: View {
     PlayistRow(playlist:
         Playlist(
             name: "Liked Songs", songCount: 3, iconName: "heart.fill",
-            overlayColor: .blue
+            overlayColor: .blue,
+            folderPath: URL(fileURLWithPath: "")
         )
     )
 }
