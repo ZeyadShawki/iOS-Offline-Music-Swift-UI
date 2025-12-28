@@ -64,14 +64,14 @@ struct DiscoveryPage : View {
                 )
                 AppIconGrid(options: buttons)
                 OfflineSongsSection(songs: [
-                    OfflineSong(
-                        title: "كليب صادفت الحب وقولت اجرب ( البت عرفت بعد...",
-                        artistNameEnglish: "Magdy ElZahar",
-                        artistNameArabic: "مجدي الزهار",
-                        duration: "03:41",
-                        fileSize: "14.8 MB",
-                        thumbnailImageName: "youtube-logo" // Replace with your image asset name
-                    )
+                    Song(
+                        title: "Amr Diab - Ayyam We Ben'eshha",
+                        artist: "Rotana",
+                        duration: 195,
+                        fileSize: 3_670_016,
+                        thumbnailImageUrl: nil,
+                        audioURL: URL(fileURLWithPath: "")
+                    ),
                 ], onMoreTap: {}, onSongTap: { music in
                     
                 })

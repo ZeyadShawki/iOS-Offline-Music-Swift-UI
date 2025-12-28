@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct OfflineSongsSection: View {
-    let songs: [OfflineSong]
+    let songs: [Song]
     let onMoreTap: () -> Void
-    let onSongTap: (OfflineSong) -> Void
+    let onSongTap: (Song) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -58,13 +58,14 @@ struct OfflineSongsSection: View {
 
 #Preview {
     OfflineSongsSection(songs: [
-        OfflineSong(
+        
+        Song( id: UUID(),
               title: "كليب صادفت الحب وقولت اجرب ( البت عرفت بعد...",
-              artistNameEnglish: "Magdy ElZahar",
-              artistNameArabic: "مجدي الزهار",
-              duration: "03:41",
-              fileSize: "14.8 MB",
-              thumbnailImageName: "youtube-logo" // Replace with your image asset name
+              artist: "SSS",
+              duration: 30,
+              fileSize: 40,
+              thumbnailImageUrl: URL(filePath: "ss"),
+              audioURL:  URL(filePath: "ss"),
           )
     ], onMoreTap: {}, onSongTap: { music in
         

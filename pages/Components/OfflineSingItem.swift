@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct OfflineSongItem: View {
-    let song: OfflineSong
+    let song: Song
     let onTap: () -> Void
     
     var body: some View {
         Button(action: onTap,){
             HStack(spacing: 12) {
                 Group {
-                    if let image = song.thumbnailImageName {
-                        Image(image).resizable().scaledToFit()
+                    if let image = song.thumbnailImageUrl {
+                        Image(image.path()).resizable().scaledToFit()
                     }
                 }.frame(width: 60,height: 60)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -21,7 +21,7 @@ struct OfflineSongItem: View {
                             .font(.system(size: 10))
                         
                         // Artist Name (English)
-                                              Text(song.artistNameEnglish)
+                                              Text(song.artist ?? "")
                                                   .font(.system(size: 12))
                                                   .foregroundColor(.secondary)
                                               
@@ -31,7 +31,9 @@ struct OfflineSongItem: View {
                                                   .foregroundColor(.secondary)
                                               
                                               // Duration
-                                              Text(song.duration)
+                                              Text(
+                                                
+                                                song.duration.formatted())
                                                   .font(.system(size: 12))
                                                   .foregroundColor(.secondary)
                                               
