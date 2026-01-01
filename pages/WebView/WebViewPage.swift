@@ -14,6 +14,13 @@ struct WebViewPage: View {
     @Binding var text: String
     @Binding var selectedSearchEngine : IconButtonOption?
     @Binding var searchURL: URL?
+    
+    // Download state
+    @State private var currentURL: String = ""
+    @State private var extractedVideoInfo: YouTubeVideoInfo?
+    @State private var showPlaylistPicker = false
+    @State private var isExtracting = false
+    @StateObject private var downloadManager = DownloadManager.shared
 
     var searchEngineOptions = [
         IconButtonOption(
@@ -52,14 +59,80 @@ struct WebViewPage: View {
             }
             ZStack(alignment: .topLeading) {
                 if let url = url {
-                    WebView(url: url).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    WebView(url: url,
+                            currentURL: ($currentURL)) { newURL in
+                                    handleURLChange(newURL)
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     emptyStateView
                 }
                 
+                // Download button - shows when video info extracted
+                if extractedVideoInfo?.audioStreamURL != nil {
+                    DownloadOverlayButton {
+                        showPlaylistPicker = true
+                    }
+                }
+
+                // Loading indicator while extracting
+                if isExtracting {
+                    ProgressView()
+                        .padding()
+                        .background(Color(.systemBackground).opacity(0.8))
+                        .cornerRadius(8)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 30)
+                }
                 
             }
             .navigationBarHidden(true)
+        }  .sheet(isPresented: $showPlaylistPicker) {
+            if let videoInfo = extractedVideoInfo {
+                PlaylistPickerSheet(videoInfo: videoInfo) { playlist in
+                    downloadManager.startDownload(videoInfo: videoInfo, to: playlist)
+                }
+            }
+        }
+    }
+    
+    private func handleURLChange(_ urlString: String) {
+        print("🔗 URL Changed: \(urlString)")
+
+        // Check if it's a YouTube video URL
+        let isYouTube = YouTubeExtractor.isYouTubeURL(urlString: urlString)
+        let videoID = YouTubeExtractor.extractVideoID(from: urlString)
+
+        print("📺 Is YouTube URL: \(isYouTube)")
+        print("🎬 Extracted Video ID: \(videoID ?? "nil")")
+
+        if isYouTube, videoID != nil {
+            extractVideoInfo(from: urlString)
+        } else {
+            print("❌ Not a valid YouTube video URL")
+            extractedVideoInfo = nil
+        }
+    }
+    
+    private func extractVideoInfo(from urlString: String) {
+        print("🚀 Starting extraction for: \(urlString)")
+        isExtracting = true
+        Task {
+            do {
+                let videoInfo = try await YouTubeExtractor.extractVideoInfo(from: urlString)
+                await MainActor.run {
+                    print("✅ Extraction successful!")
+                    print("📝 Title: \(videoInfo?.title ?? "nil")")
+                    print("🔊 Audio URL: \(videoInfo?.audioStreamURL?.absoluteString ?? "nil")")
+                    extractedVideoInfo = videoInfo
+                    isExtracting = false
+                }
+            } catch {
+                print("❌ Failed to extract video info: \(error)")
+                await MainActor.run {
+                    extractedVideoInfo = nil
+                    isExtracting = false
+                }
+            }
         }
     }
     
@@ -105,7 +178,7 @@ struct WebViewPage: View {
 #Preview {
     NavigationStack {
         WebViewPage(
-            url: URL(string: "https://www.google.com"),
+            url: URL(string: "https://www.youtube.com/watch?v=YQHsXMglC9A&list=RDYQHsXMglC9A&start_radio=1"),
             text: .constant(""),
             selectedSearchEngine: .constant(nil),
             searchURL: .constant(nil)

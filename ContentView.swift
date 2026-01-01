@@ -9,6 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab = 0
+    init(selectedTab: Int = 0) {
+        self.selectedTab = selectedTab
+    }
     var body: some View {
         ZStack (alignment: .bottom){
             TabView(selection: $selectedTab){
@@ -32,6 +35,8 @@ struct ContentView: View {
                             audioURL: URL(fileURLWithPath: "")
                         )
             ).padding(.horizontal,20)
+        }.task {
+           try? await YouTubeExtractor.extractVideoInfo(from: "")
         }
     }
 }

@@ -4,7 +4,7 @@ import Foundation
 class FileManagerHelper {
     private var fileManager : FileManager
     private let playlistDir : URL
-
+    
     init(fileManager: FileManager = FileManager.default) {
         self.fileManager = fileManager
         let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -52,4 +52,21 @@ class FileManagerHelper {
             print("error while removing item \(error)")
         }
     }
+    
+    func sanitizeFilename(_ filename: String) -> String {
+        let invalidChars = CharacterSet(charactersIn: "/\\?%*|\"<>:")
+        return filename.components(separatedBy: invalidChars).joined(separator: "_")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func generateUniqueFilename(_ base: String, ext: String, in folder: URL) -> String {
+        var filename = "\(base).\(ext)"
+        var counter = 1
+        while FileManager.default.fileExists(atPath: folder.appendingPathComponent(filename).path) {
+            filename = "\(base) (\(counter)).\(ext)"
+            counter += 1
+        }
+        return filename
+    }
+    
 }
