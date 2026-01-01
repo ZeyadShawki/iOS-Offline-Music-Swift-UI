@@ -20,7 +20,7 @@ struct PlaylistPage : View {
     @State var isPresented = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if isLoading {
                     ProgressView("Loading playlists...")
@@ -37,7 +37,7 @@ struct PlaylistPage : View {
                                 placeHolder: "Search on Library",
                                 title: nil,
                                 buttonOptions: [],
-                                selectedOption:  .constant(nil),
+                                selectedOption: .constant(nil),
                                 onSearch: {
 
                                 }
@@ -48,36 +48,40 @@ struct PlaylistPage : View {
                             isPresented = true
                         }
 
-                        List(playlists) { Playlist in
-                            PlayistRow(playlist: Playlist)
-                                .listRowInsets(EdgeInsets(top: 20, leading: 0, bottom: 20, trailing: 0))
-                                .listRowBackground(Color.clear)
-                                .alignmentGuide(.listRowSeparatorLeading) { d in
-                                    d[.leading]
-                                }
-                        }.listStyle(PlainListStyle())
-                    }.padding(.horizontal)
+                        List(playlists) { playlist in
+                            NavigationLink(destination: SongsPage(playlist: playlist)) {
+                                PlayistRow(playlist: playlist)
+                            }
+                            .listRowInsets(EdgeInsets(top: 20, leading: 0, bottom: 20, trailing: 0))
+                            .listRowBackground(Color.clear)
+                            .alignmentGuide(.listRowSeparatorLeading) { d in
+                                d[.leading]
+                            }
+                        }
+                        .listStyle(PlainListStyle())
+                        .padding(.horizontal)
+                    }
+                    .background(Color(.systemBackground))
                 }
             }
-            .background(Color(.systemBackground))
-        }
-        .sheet(isPresented: $isPresented, onDismiss: {
-            if folderName.isEmpty {
-                return
+            .sheet(isPresented: $isPresented, onDismiss: {
+                if folderName.isEmpty {
+                    return
+                }
+                guard let playlist = playlistManager.createPlaylist(name: folderName) else { return }
+                playlists.append(playlist)
+                folderName = ""
+            }) {
+                AddFolderSheet(folderName: $folderName, isPresented: $isPresented)
             }
-            guard let playlist = playlistManager.createPlaylist(name: folderName) else { return }
-            playlists.append(playlist)
-            folderName = ""
-        }) {
-            AddFolderSheet(folderName: $folderName, isPresented: $isPresented)
-        }
-        .task {
-            isLoading = true
-            
-            self.playlistManager.fetchPlaylists(){ fetched in
-                DispatchQueue.main.async{
-                    playlists = fetched
-                    isLoading = false
+            .task {
+                isLoading = true
+
+                self.playlistManager.fetchPlaylists() { fetched in
+                    DispatchQueue.main.async {
+                        playlists = fetched
+                        isLoading = false
+                    }
                 }
             }
         }
