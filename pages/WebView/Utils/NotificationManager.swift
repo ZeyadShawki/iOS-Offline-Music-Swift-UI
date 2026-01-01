@@ -31,11 +31,21 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     // Show notifications even when app is in foreground
+    // Only show banner for complete/failed notifications, progress updates are silent
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound])
+        let id = notification.request.identifier
+        // Only complete/failed notifications show banner, progress updates are silent
+        if id.contains("download-complete") || id.contains("download-failed") {
+            completionHandler([.banner, .sound])
+        } else if id.hasPrefix("download-") {
+            // Progress and started notifications - update silently (stays in notification center)
+            completionHandler([.list])
+        } else {
+            completionHandler([.banner, .sound])
+        }
     }
     
-    func showDownloadStarted(title: String) {
+    func showDownloadStarted(title: String, id: String) {
         print("🔔 Showing download started notification for: \(title)")
         let content = UNMutableNotificationContent()
 
@@ -43,7 +53,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         content.body = title
         content.sound = nil
 
-        let request = UNNotificationRequest(identifier: "download-started-\(UUID().uuidString)", content: content, trigger: nil)
+        // Same identifier used throughout download lifecycle
+        let request = UNNotificationRequest(identifier: "download-\(id)", content: content, trigger: nil)
 
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
@@ -53,29 +64,47 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             }
         }
     }
-    
-    func showDownloadCompleted(title: String, playlistName: String) {
+
+    func updateDownloadProgress(title: String, id: String, progress: Int) {
+        let content = UNMutableNotificationContent()
+
+        content.title = "Downloading \(progress)%"
+        content.body = title
+        content.sound = nil
+
+        // Same identifier - updates the existing notification in-place
+        let request = UNNotificationRequest(identifier: "download-\(id)", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    func showDownloadCompleted(title: String, playlistName: String, id: String) {
+        // Remove the download notification
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ["download-\(id)"])
+
         let content = UNMutableNotificationContent()
         content.title = "Download Complete"
         content.body = "\(title) saved to \(playlistName)"
         content.sound = .default
 
         let request = UNNotificationRequest(
-            identifier: "download-complete-\(UUID().uuidString)",
+            identifier: "download-complete-\(id)",
             content: content,
             trigger: nil
         )
         UNUserNotificationCenter.current().add(request)
     }
-    
-    func showDownloadFailed(title: String, error: String) {
+
+    func showDownloadFailed(title: String, error: String, id: String) {
+        // Remove the download notification
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ["download-\(id)"])
+
         let content = UNMutableNotificationContent()
         content.title = "Download Failed"
         content.body = "\(title): \(error)"
         content.sound = .default
 
         let request = UNNotificationRequest(
-            identifier: "download-failed-\(UUID().uuidString)",
+            identifier: "download-failed-\(id)",
             content: content,
             trigger: nil
         )

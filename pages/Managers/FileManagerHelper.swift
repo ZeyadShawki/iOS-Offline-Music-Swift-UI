@@ -3,12 +3,23 @@ import Foundation
 
 class FileManagerHelper {
     private var fileManager : FileManager
+    private let documentsDir: URL
     private let playlistDir : URL
-    
+
     init(fileManager: FileManager = FileManager.default) {
         self.fileManager = fileManager
-        let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        self.playlistDir = docs.appendingPathComponent("playlists")
+        self.documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        self.playlistDir = documentsDir.appendingPathComponent("playlists")
+    }
+
+    /// Returns the relative path (relative to Documents directory) for storage in Core Data
+    func getRelativePath(for name: String) -> String {
+        return "playlists/\(name)"
+    }
+
+    /// Returns the full URL from a relative path (relative to Documents directory)
+    func getFullPath(from relativePath: String) -> URL {
+        return documentsDir.appendingPathComponent(relativePath)
     }
     
     func getSongCount(from folderPath: String)-> Int {

@@ -66,7 +66,7 @@ struct WebViewPage: View {
                 } else {
                     emptyStateView
                 }
-                
+
                 // Download button - shows when video info extracted
                 if extractedVideoInfo?.audioStreamURL != nil {
                     DownloadOverlayButton {
@@ -83,7 +83,15 @@ struct WebViewPage: View {
                         .padding(.trailing, 20)
                         .padding(.bottom, 30)
                 }
-                
+
+                // Download progress banner
+                if let activeDownload = downloadManager.activeDownloads.first(where: { $0.status == .downloading || $0.status == .pending }) {
+                    VStack {
+                        Spacer()
+                        downloadProgressBanner(for: activeDownload)
+                    }
+                }
+
             }
             .navigationBarHidden(true)
         }  .sheet(isPresented: $showPlaylistPicker) {
@@ -172,7 +180,48 @@ struct WebViewPage: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
+    private func downloadProgressBanner(for task: DownloadTask) -> some View {
+        HStack(spacing: 12) {
+            // Thumbnail
+            AsyncImage(url: task.videoInfo.thumbnailURL) { image in
+                image.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle().fill(Color.gray.opacity(0.3))
+            }
+            .frame(width: 50, height: 38)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            // Title and progress
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.videoInfo.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    ProgressView(value: task.progress)
+                        .progressViewStyle(.linear)
+
+                    Text("\(Int(task.progress * 100))%")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            // Status indicator
+            if task.status == .pending {
+                ProgressView()
+                    .scaleEffect(0.8)
+            }
+        }
+        .padding(12)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: -2)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+    }
+
 }
 
 #Preview {

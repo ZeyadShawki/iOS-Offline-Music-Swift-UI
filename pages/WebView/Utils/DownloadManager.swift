@@ -37,7 +37,6 @@ class DownloadManager: NSObject, ObservableObject {
 
         guard let audioURL = videoInfo.audioStreamURL else {
             print("❌ No audio stream URL found")
-            notificationManager.showDownloadFailed(title: videoInfo.title, error: "No audio stream found")
             return
         }
 
@@ -55,7 +54,7 @@ class DownloadManager: NSObject, ObservableObject {
         Task {
             let granted = await notificationManager.requestPermission()
             print("📥 Notification permission granted: \(granted)")
-            self.notificationManager.showDownloadStarted(title: videoInfo.title)
+            self.notificationManager.showDownloadStarted(title: videoInfo.title, id: task.id.uuidString)
         }
 
         var request = URLRequest(url: audioURL)
@@ -87,12 +86,12 @@ class DownloadManager: NSObject, ObservableObject {
             
             task.status = .completed
             task.progress = 1.0
-            
+
             DispatchQueue.main.async {
                 self.updateTask(task)
-                self.notificationManager.showDownloadCompleted(title: videoInfo.title, playlistName: playlist.name)
+                self.notificationManager.showDownloadCompleted(title: videoInfo.title, playlistName: playlist.name, id: taskId.uuidString)
             }
-            
+
             } catch {
                 task.status = .failed
                 task.error = error.localizedDescription
@@ -100,7 +99,8 @@ class DownloadManager: NSObject, ObservableObject {
                     self.updateTask(task)
                     self.notificationManager.showDownloadFailed(
                         title: videoInfo.title,
-                        error: error.localizedDescription
+                        error: error.localizedDescription,
+                        id: taskId.uuidString
                     )
                 }
             }
@@ -119,7 +119,11 @@ class DownloadManager: NSObject, ObservableObject {
 extension DownloadManager: URLSessionDownloadDelegate {
     
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        guard let taskId = downloadTaskMap[downloadTask] else { return }
+        print("📥 Download finished! Temp location: \(location)")
+        guard let taskId = downloadTaskMap[downloadTask] else {
+            print("❌ No task ID found for download")
+            return
+        }
         downloadTaskMap.removeValue(forKey: downloadTask)
         completeDownload(taskId: taskId, tempURL: location)
     }
@@ -127,18 +131,40 @@ extension DownloadManager: URLSessionDownloadDelegate {
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         guard let taskId = downloadTaskMap[downloadTask], var task = pendingDownloads[taskId] else { return }
         let progress = totalBytesExpectedToWrite > 0 ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0
+        let progressPercent = Int(progress * 100)
+
+        print("📥 Progress: \(progressPercent)%")
+
+        task.status = .downloading
         task.progress = progress
         task.downloadedBytes = totalBytesWritten
         task.totalBytes = totalBytesExpectedToWrite
         pendingDownloads[taskId] = task
+
+        // Update notification every 1% to avoid too many updates
+        let previousProgress = Int((task.progress - (Double(bytesWritten) / Double(totalBytesExpectedToWrite))) * 100)
+        if progressPercent / 1 > previousProgress / 1 || progressPercent == 100 {
+            notificationManager.updateDownloadProgress(
+                title: task.videoInfo.title,
+                id: taskId.uuidString,
+                progress: progressPercent
+            )
+        }
+
         DispatchQueue.main.async { self.updateTask(task) }
     }
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
+        if let error = error {
+            print("❌ Download error: \(error.localizedDescription)")
+        } else {
+            print("✅ Download task completed without error")
+        }
+
         guard let downloadTask = task as? URLSessionDownloadTask,
               let taskId = downloadTaskMap[downloadTask],
               let error = error else { return }
-        
+
         downloadTaskMap.removeValue(forKey: downloadTask)
         if var task = pendingDownloads[taskId] {
             task.status = .failed
@@ -148,11 +174,12 @@ extension DownloadManager: URLSessionDownloadDelegate {
                 self.updateTask(task)
                 self.notificationManager.showDownloadFailed(
                     title: task.videoInfo.title,
-                    error: error.localizedDescription
+                    error: error.localizedDescription,
+                    id: taskId.uuidString
                 )
             }
         }
-}
+    }
     
     
     

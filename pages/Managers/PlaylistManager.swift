@@ -14,14 +14,24 @@ class PlaylistManager {
             let request: NSFetchRequest<PlaylistEntity> = PlaylistEntity.fetchRequest()
             do {
                 let entities = try context.fetch(request)
+                print("📂 Fetched \(entities.count) playlist entities from Core Data")
+
                 playlists = entities.compactMap { entity -> Playlist? in
-                    let folderPath = entity.path ?? ""
-                    let url = URL(fileURLWithPath: folderPath)
+                    let relativePath = entity.path ?? ""
+
+                    // Convert relative path to full URL using FileManagerHelper
+                    let url = fileManager.getFullPath(from: relativePath)
+
+                    print("📂 Playlist: \(entity.name ?? "unknown"), relative path: \(relativePath)")
+                    print("📂 Full path: \(url.path)")
+                    print("📂 File exists: \(FileManager.default.fileExists(atPath: url.path))")
+
                     guard FileManager.default.fileExists(atPath: url.path) else {
+                        print("⚠️ Folder not found, skipping playlist: \(entity.name ?? "")")
                         return nil
                     }
 
-                    let songCount = fileManager.getSongCount(from: folderPath)
+                    let songCount = fileManager.getSongCount(from: url.path)
                     return Playlist(
                         id: entity.id ?? UUID(),
                         name: entity.name ?? "",
@@ -31,8 +41,9 @@ class PlaylistManager {
                         folderPath: url
                     )
                 }
+                print("📂 Final playlists count: \(playlists.count)")
             } catch {
-                print("Error fetching playlists: \(error)")
+                print("❌ Error fetching playlists: \(error)")
             }
         }
         completionHandler(playlists)
@@ -40,10 +51,16 @@ class PlaylistManager {
     
     func createPlaylist(name: String) -> Playlist? {
         let playlistId = UUID()
-        guard let path = fileManager.createPlaylistFolder(named: name) else {
+        guard let fullPath = fileManager.createPlaylistFolder(named: name) else {
             print("Error saving folder")
             return nil
         }
+
+        // Store relative path instead of absolute path
+        let relativePath = fileManager.getRelativePath(for: name)
+        print("📂 Creating playlist: \(name)")
+        print("📂 Relative path (stored): \(relativePath)")
+        print("📂 Full path: \(fullPath.path)")
 
         // 1. Create a new PlaylistEntity in the Core Data context
         let entity = PlaylistEntity(context: context)
@@ -53,12 +70,13 @@ class PlaylistManager {
         entity.name = name
         entity.icon = "heart.fill"
         entity.overlayColor = Color.blue.description
-        entity.path = path.path()
+        entity.path = relativePath  // Store relative path, not absolute!
 
         // 3. Save the context to persist to Core Data
         do {
             if context.hasChanges {
                 try context.save()
+                print("✅ Playlist saved to Core Data with relative path")
             }
             return Playlist(
                 id: playlistId,
@@ -66,7 +84,7 @@ class PlaylistManager {
                 songCount: 0,
                 iconName: "heart.fill",
                 overlayColor: .blue,
-                folderPath: path
+                folderPath: fullPath
             )
         } catch {
             print("Error saving playlist: \(error)")
