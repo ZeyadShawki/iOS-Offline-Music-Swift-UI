@@ -80,4 +80,31 @@ class FileManagerHelper {
         return filename
     }
     
+    
+    func getURLsFromFolder(from folderURL: URL, supportedFormats: [String]) -> [URL] {
+        guard let enumerator = fileManager.enumerator(at: folderURL, includingPropertiesForKeys: [.isRegularFileKey],
+                                                      options: [.skipsHiddenFiles]
+        ) else { return [] }
+        
+        var audioFiles: [URL] = []
+        for case let fileURL as URL in enumerator {
+            let fileExtension = fileURL.pathExtension.lowercased()
+            if supportedFormats.contains(fileExtension) {
+                audioFiles.append(fileURL)
+            }
+        }
+        return audioFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+    }
+   static func getFileSize(from fileURL: URL) -> Int {
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: fileURL.path())
+            if let size = attributes[.size] as? Int64 {
+                 return Int(size / (1024 * 1024))
+            }
+        } catch {
+            print("Error getting file size: \(error)")
+        }
+        return 0
+    }
+    
 }
