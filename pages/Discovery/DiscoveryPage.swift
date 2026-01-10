@@ -24,15 +24,6 @@ struct DiscoveryPage : View {
             },
             searchEngine: .youtube
         ),
-        IconButtonOption(
-            title: "Google",
-            color: nil,
-            imageName: "google-logo",
-            action: {
-                print("Google option selected")
-            },
-            searchEngine: .google
-        )
     ]
     
     var buttons : [IconButtonOption] = {
@@ -62,7 +53,6 @@ struct DiscoveryPage : View {
                     selectedOption: $selectedSearchEngine,
                     onSearch: onSearch
                 )
-                AppIconGrid(options: buttons)
                 OfflineSongsSection(songs: [
                     Song(
                         title: "Amr Diab - Ayyam We Ben'eshha",

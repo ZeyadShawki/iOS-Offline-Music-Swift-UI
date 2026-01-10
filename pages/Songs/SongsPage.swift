@@ -14,8 +14,8 @@ struct SongsPage: View {
 
     @State private var isLoading = true
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var audioManager = AudioManager.shared
-    
+    @EnvironmentObject var audioManager: AudioManager
+
     // Init must use _songs for @State
     init(playlist: Playlist, songs: [Song] = []) {
         self.playlist = playlist
@@ -48,7 +48,8 @@ struct SongsPage: View {
             ForEach(songs) { song in
                 Group {
                     SongRow(song: song, onTap: {
-                        
+                        audioManager.setupQueue(songsQueue: songs)
+                        audioManager.play(song: song)
                     }, onAddToNextPlay: {
                         
                     }, onDelete: {

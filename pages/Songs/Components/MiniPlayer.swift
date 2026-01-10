@@ -8,11 +8,8 @@
 import SwiftUI
 
 struct MiniPlayer: View {
-    var song: Song
-    init(song: Song) {
-        self.song = song
-    }
-    
+    @EnvironmentObject var audioManager: AudioManager
+
     var body: some View {
         VStack {
             GeometryReader { geometry in
@@ -22,8 +19,8 @@ struct MiniPlayer: View {
             }.frame(height: 10)
             
             HStack(spacing: 12) {
-                thumbnail( for :song)
-                songInfo(for: song)
+                thumbnail(for: audioManager.currentSong)
+                songInfo(for:  audioManager.currentSong)
                 Spacer()
                 playControls
             }
@@ -101,14 +98,5 @@ struct MiniPlayer: View {
 }
 
 #Preview {
-    MiniPlayer(
-        song: Song(
-            title: "Amr Diab - Ayyam We Ben'eshha",
-            artist: "Rotana",
-            duration: 195,
-            fileSize: 3_670_016,
-            thumbnailImageUrl: nil,
-            audioURL: URL(fileURLWithPath: "")
-        ),
-    )
+    MiniPlayer().environment(MockAudioManager())
 }

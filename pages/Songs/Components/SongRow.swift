@@ -34,9 +34,9 @@ struct SongRow: View {
                 .lineLimit(1)
             HStack(spacing: 16) {
                 Image(systemName: "music.note").font(.system(size: 12)).foregroundColor(.orange)
-                Text(song.artist ?? "").font(.system(size: 12)).foregroundColor(.secondary)
+                Text(song.artist).font(.system(size: 12)).foregroundColor(.secondary)
                 Text("|").font(.system(size: 12)).foregroundColor(.secondary)
-                Text(song.duration.formatted()).font(.system(size: 12)).foregroundColor(.secondary)
+                Text(song.formattedDuration).font(.system(size: 12)).foregroundColor(.secondary)
                 Text("|").font(.system(size: 12)).foregroundColor(.secondary)
                 Text(song.formattedFileSize).font(.system(size: 12)).foregroundColor(.secondary)
             }

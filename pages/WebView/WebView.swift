@@ -14,7 +14,11 @@ struct WebView: UIViewRepresentable {
     var onURLChange: ((String) -> Void)?
 
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        let configuration = WKWebViewConfiguration()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+
+        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
 
         // Add KVO observer for URL changes (catches SPA navigation)

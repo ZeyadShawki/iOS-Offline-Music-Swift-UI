@@ -28,13 +28,19 @@ class AudioManager: NSObject, ObservableObject {
     private var timeObserver: Any?
     private var cancellables = Set<AnyCancellable>()
     
-    private override init() {
+    override init() {
         super.init()
     }
     
     deinit {
         
     }
+    
+    func setupQueue(songsQueue: [Song]){
+        clearQueue()
+        queue = songsQueue
+    }
+    
     
     private func setupAudioSession() {
         do {
@@ -329,4 +335,14 @@ class AudioManager: NSObject, ObservableObject {
     }
     
     
+}
+
+
+class MockAudioManager: AudioManager {
+    // Provide a convenience initializer for previews
+    init(mockSong: Song = .mock) {
+        super.init()
+        self.currentSong = mockSong
+        self.isPlaying = true
+    }
 }

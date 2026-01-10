@@ -78,3 +78,14 @@ extension Song: Hashable {
         lhs.id == rhs.id
     }
 }
+
+extension Song {
+    static let mock =  Song(
+        title: "Amr Diab - Ayyam We Ben'eshha",
+        artist: "Rotana",
+        duration: 195,
+        fileSize: 3_670_016,
+        thumbnailImageUrl: nil,
+        audioURL: URL(fileURLWithPath: "")
+    )
+}
