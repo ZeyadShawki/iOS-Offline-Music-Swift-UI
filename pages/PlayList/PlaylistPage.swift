@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct PlaylistPage : View {
+struct PlaylistPage: View {
     init(playlists: [Playlist]) {
         self.playlists = playlists
     }
@@ -49,79 +49,108 @@ struct PlaylistPage : View {
                         }
 
                         List(playlists) { playlist in
-                            NavigationLink(destination: SongsPage(playlist: playlist)) {
+                            NavigationLink(
+                                destination: SongsPage(playlist: playlist)
+                            ) {
                                 PlayistRow(playlist: playlist)
                             }
-                            .listRowInsets(EdgeInsets(top: 20, leading: 0, bottom: 20, trailing: 0))
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 20,
+                                    leading: 0,
+                                    bottom: 20,
+                                    trailing: 0
+                                )
+                            )
                             .listRowBackground(Color.clear)
                             .alignmentGuide(.listRowSeparatorLeading) { d in
                                 d[.leading]
                             }
                         }
                         .listStyle(PlainListStyle())
-                        .padding(.horizontal)
                     }
                     .background(Color(.systemBackground))
                 }
-            }
-            .sheet(isPresented: $isPresented, onDismiss: {
-                if folderName.isEmpty {
-                    return
-                }
-                guard let playlist = playlistManager.createPlaylist(name: folderName) else { return }
-                playlists.append(playlist)
-                folderName = ""
-            }) {
-                AddFolderSheet(folderName: $folderName, isPresented: $isPresented)
-            }
-            .task {
-                isLoading = true
+            }.padding(.horizontal)
 
-                self.playlistManager.fetchPlaylists() { fetched in
-                    DispatchQueue.main.async {
-                        playlists = fetched
-                        isLoading = false
+                .sheet(
+                    isPresented: $isPresented,
+                    onDismiss: {
+                        if folderName.isEmpty {
+                            return
+                        }
+                        guard
+                            let playlist = playlistManager.createPlaylist(
+                                name: folderName
+                            )
+                        else { return }
+                        playlists.append(playlist)
+                        folderName = ""
+                    }
+                ) {
+                    AddFolderSheet(
+                        folderName: $folderName,
+                        isPresented: $isPresented
+                    )
+                }
+                .task {
+                    isLoading = true
+
+                    self.playlistManager.fetchPlaylists { fetched in
+                        DispatchQueue.main.async {
+                            playlists = fetched
+                            isLoading = false
+                        }
                     }
                 }
-            }
         }
     }
-    
-    struct AddButton : View {
-        var onTap : () -> Void
+
+    struct AddButton: View {
+        var onTap: () -> Void
         var body: some View {
             Button(action: onTap) {
-                VStack (alignment: .leading){
-                    HStack(alignment: .top, spacing: 16){
-                        RoundedRectangle(cornerRadius: 12).fill(Color(.gray)).frame(width: 50,height: 50).overlay(Image(
-                            systemName: "folder.fill.badge.plus"
-                        ).font(.system(size: 30)).foregroundStyle(.yellow))
-                        VStack{
+                VStack(alignment: .leading) {
+                    HStack(alignment: .top, spacing: 16) {
+                        RoundedRectangle(cornerRadius: 12).fill(Color(.gray))
+                            .frame(width: 50, height: 50).overlay(
+                                Image(
+                                    systemName: "folder.fill.badge.plus"
+                                ).font(.system(size: 30)).foregroundStyle(
+                                    .yellow
+                                )
+                            )
+                        VStack {
                             Spacer()
-                            Text("Add new playlist").foregroundColor(.yellow).bold()
+                            Text("Add new playlist").foregroundColor(.yellow)
+                                .bold()
                             Spacer()
-                            
+
                         }.frame(maxHeight: 50)
                     }
-                    .frame(maxWidth: .infinity,alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
     }
 }
-    #Preview {
-        PlaylistPage(
-            playlists: [
-                Playlist(
-                    name: "Liked Songs", songCount: 3, iconName: "heart.fill",
-                    overlayColor: .blue,
-                    folderPath: URL(fileURLWithPath: "")
-                ),
-                Playlist(
-                    name: "Liked Songs", songCount: 3, iconName: "heart.fill",
-                    overlayColor: .blue,
-                    folderPath: URL(fileURLWithPath: "")
-                )
-            ]
-        )
+#Preview {
+    PlaylistPage(
+        playlists: [
+            Playlist(
+                name: "Liked Songs",
+                songCount: 3,
+                iconName: "heart.fill",
+                overlayColor: .blue,
+                folderPath: URL(fileURLWithPath: "")
+            ),
+            Playlist(
+                name: "Liked Songs",
+                songCount: 3,
+                iconName: "heart.fill",
+                overlayColor: .blue,
+                folderPath: URL(fileURLWithPath: "")
+            ),
+        ]
+    )
 }

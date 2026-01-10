@@ -10,24 +10,37 @@ import SwiftUI
 
 struct SongsPage: View {
     let playlist: Playlist
-    private var songs: [Song] = []
+    @State private var songs: [Song] = []
 
     @State private var isLoading = true
     @Environment(\.dismiss) private var dismiss
-    init(playlist: Playlist, songs: [Song]) {
+    @ObservedObject private var audioManager = AudioManager.shared
+    
+    // Init must use _songs for @State
+    init(playlist: Playlist, songs: [Song] = []) {
         self.playlist = playlist
-        self.songs = songs
+        _songs = State(initialValue: songs)
     }
     
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(spacing: 0){
-                    headerSection
-                    songList
+                    if isLoading {
+                        ProgressView("Loading Songs...").padding(.top,40)
+                    } else if songs.isEmpty {
+                        Text("No Songs in this playlist").foregroundColor(.secondary).padding(.top, 40)
+                    } else {
+                        headerSection
+                        songList
+                    }
                 }
             }
-        }.padding(.horizontal)
+        }.padding(.horizontal).task {
+            isLoading = true
+            songs = await SongManager.shared.loadSongs(for: playlist)
+            isLoading = false
+        }
     }
     
     private var songList: some View {
@@ -97,7 +110,7 @@ struct SongsPage: View {
                 overlayColor: .orange,
                 folderPath: nil
             ),
-            songs: [
+            songs:  [
                 Song(
                     title: "Amr Diab - Ayyam We Ben'eshha",
                     artist: "Rotana",
@@ -115,6 +128,7 @@ struct SongsPage: View {
                     audioURL: URL(fileURLWithPath: "")
                 ),
             ]
+                            
         )
     }
     

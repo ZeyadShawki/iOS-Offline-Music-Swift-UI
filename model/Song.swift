@@ -68,3 +68,13 @@ extension Array where Element == Song {
         return String(format: "%02d:%02d", minutes, seconds)
     }
 }
+
+extension Song: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: Song, rhs: Song) -> Bool {
+        lhs.id == rhs.id
+    }
+}

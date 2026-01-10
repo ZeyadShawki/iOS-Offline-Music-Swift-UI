@@ -95,9 +95,10 @@ class FileManagerHelper {
         }
         return audioFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
     }
-   static func getFileSize(from fileURL: URL) -> Int {
+    
+    func getFileSize(from fileURL: URL) -> Int {
         do {
-            let attributes = try fileManager.attributesOfItem(atPath: fileURL.path())
+            let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
             if let size = attributes[.size] as? Int64 {
                  return Int(size / (1024 * 1024))
             }

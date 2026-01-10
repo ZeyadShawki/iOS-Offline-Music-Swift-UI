@@ -26,3 +26,20 @@ extension Int? {
         return String(format: "%02d:%02d", minutes, seconds)
     }
 }
+
+extension AudioCodec {
+    var fileExtension: String {
+        switch self {
+        case .mp4a:
+            return "m4a"
+        case .opus:
+            return "opus"
+        case .unknown:
+            return "m4a"
+        case .ec3:
+            return "ec3"
+        case .ac3:
+            return "ac3"
+        }
+    }
+}

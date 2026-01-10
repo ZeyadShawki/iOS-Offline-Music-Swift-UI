@@ -6,7 +6,7 @@
 //
 
 import Foundation
-internal import Combine
+import Combine
 
 class DownloadManager: NSObject, ObservableObject {
     static let shared = DownloadManager()
@@ -73,7 +73,8 @@ class DownloadManager: NSObject, ObservableObject {
         let playlist = task.destinationPlaylist
         
         do {
-            let filename = fileHelper.sanitizeFilename((( videoInfo.title) + ".\(String(describing: videoInfo.audioMimeType))"))
+            let fileExtension = videoInfo.audioMimeType?.fileExtension ?? "m4a"
+            let filename = fileHelper.sanitizeFilename(videoInfo.title) + ".\(fileExtension)"
             guard let playlistFolder = playlist.folderPath else {
                 throw NSError(domain: "DownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Playlist folder not found"])
             }

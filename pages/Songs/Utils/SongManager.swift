@@ -7,7 +7,7 @@
 
 import Foundation
 import AVFoundation
-internal import Combine
+import Combine
 
 class SongManager: ObservableObject {
     
@@ -32,9 +32,9 @@ class SongManager: ObservableObject {
         var loadedSongs: [Song] = []
         
         for fileURL in songFiles {
-            if let song = await extractMetaData(from: fileURL){
-                loadedSongs.append(song)
-            }
+            let song = await extractMetaData(from: fileURL)
+            loadedSongs.append(song)
+
         }
         
         songs = loadedSongs
@@ -68,11 +68,15 @@ class SongManager: ObservableObject {
                 }
             }
             
-            title = title?.isEmpty == false ? fileURL.deletingPathExtension().lastPathComponent : title
-            artist = artist?.isEmpty == false ? artist! : "Unknown Artist"
+            if title == nil || title?.isEmpty == true {
+                title = fileURL.deletingPathExtension().lastPathComponent
+            }
+            if artist == nil || artist?.isEmpty == true {
+                artist = "Unknown Artist"
+            }
             
             let durationSeconds = Int(CMTimeGetSeconds(durationValue))
-            let fileSize = FileManagerHelper.getFileSize(from: fileURL)
+            let fileSize = fileManagerHelper.getFileSize(from: fileURL)
             
             return Song(
                 title: title ?? "N/A",
@@ -90,7 +94,7 @@ class SongManager: ObservableObject {
                 title: fileURL.deletingPathExtension().lastPathComponent,
                 artist: "Unknown Artist",
                 duration: 0,
-                fileSize: FileManagerHelper.getFileSize(from: fileURL),
+                fileSize: fileManagerHelper.getFileSize(from: fileURL),
                 thumbnailImageUrl: nil,
                 audioURL: fileURL
             )
