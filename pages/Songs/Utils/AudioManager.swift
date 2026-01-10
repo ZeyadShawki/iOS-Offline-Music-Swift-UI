@@ -13,6 +13,7 @@ import Combine
 class AudioManager: NSObject, ObservableObject {
     static let shared = AudioManager()
     
+    @Published var currentPlaylist: Playlist?
     @Published var currentSong: Song?
     @Published var isPlaying = false
     @Published var currentTime: TimeInterval = 0
@@ -36,9 +37,10 @@ class AudioManager: NSObject, ObservableObject {
         
     }
     
-    func setupQueue(songsQueue: [Song]){
+    func initQueue(songsQueue: [Song], playlist: Playlist) {
         clearQueue()
-        queue = songsQueue
+        self.queue = songsQueue
+        self.currentPlaylist = playlist
     }
     
     
@@ -281,6 +283,7 @@ class AudioManager: NSObject, ObservableObject {
         currentTime = 0
         duration = 0
         progress = 0
+        currentPlaylist = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
     
@@ -337,12 +340,12 @@ class AudioManager: NSObject, ObservableObject {
     
 }
 
-
-class MockAudioManager: AudioManager {
-    // Provide a convenience initializer for previews
-    init(mockSong: Song = .mock) {
-        super.init()
-        self.currentSong = mockSong
+extension AudioManager {
+    convenience init(song: Song) {
+        self.init()
+        self.currentSong = song
         self.isPlaying = true
+        self.duration = Double(song.duration)
+        self.progress = 0.3
     }
 }

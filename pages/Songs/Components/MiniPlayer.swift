@@ -30,18 +30,23 @@ struct MiniPlayer: View {
     
     private var playControls: some View {
         HStack(spacing: 20) {
-            Button(action: {}) {
+            Button(action: {
+                audioManager.previous()
+
+            }) {
                 Image(systemName: "backward.end.fill")
                     .font(.system(size: 20))
                 .foregroundColor(.primary)
             }
             Button(action: {
-                
+                audioManager.togglePlayPause()
             }) {
-                Image(systemName: true ? "pause.fill" : "play.fill").font(.system(size: 24)).foregroundColor(.primary)
+                Image(systemName: audioManager.isPlaying ? "pause.fill" : "play.fill").font(.system(size: 24)).foregroundColor(.primary)
             }
             
-            Button(action: {}) {
+            Button(action: {
+                audioManager.next()
+            }) {
                 Image(systemName: "forward.end.fill")
                     .font(.system(size: 20))
                 .foregroundColor(.primary)
@@ -58,9 +63,9 @@ struct MiniPlayer: View {
         }
     }
     
-    private func thumbnail(for song: Song) -> some View {
+    private func thumbnail(for song: Song?) -> some View {
         Group {
-            if let thumbnail = song.thumbnailImageUrl {
+            if let thumbnail = song?.thumbnailImageUrl {
                 AsyncImage(url: thumbnail) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
@@ -72,14 +77,14 @@ struct MiniPlayer: View {
         }.frame(width: 50, height: 50).clipShape(RoundedRectangle(cornerRadius: 6))
     }
     // MARK: - Song Info
-    private func songInfo(for song: Song) -> some View {
+    private func songInfo(for song: Song?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(song.title)
+            Text(song?.title ?? "")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.primary)        .multilineTextAlignment(.leading)
                 .lineLimit(2) // allow unlimited lines
 
-            Text(song.artist ?? "N/A")
+            Text(song?.artist ?? "N/A")
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
         }
@@ -98,5 +103,5 @@ struct MiniPlayer: View {
 }
 
 #Preview {
-    MiniPlayer().environment(MockAudioManager())
+    MiniPlayer().environmentObject(AudioManager(song: .mock))
 }

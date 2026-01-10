@@ -48,7 +48,7 @@ struct SongsPage: View {
             ForEach(songs) { song in
                 Group {
                     SongRow(song: song, onTap: {
-                        audioManager.setupQueue(songsQueue: songs)
+                        audioManager.initQueue(songsQueue: songs,playlist: playlist)
                         audioManager.play(song: song)
                     }, onAddToNextPlay: {
                         

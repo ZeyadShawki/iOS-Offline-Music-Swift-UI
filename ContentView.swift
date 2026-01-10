@@ -25,16 +25,8 @@ struct ContentView: View {
                     Label("Setting",systemImage: "gear")
                 }
             }.padding(.bottom, 60)
-            MiniPlayer(song:
-                        Song(
-                            title: "Amr Diab - Ayyam We Ben'eshha",
-                            artist: "Rotana",
-                            duration: 195,
-                            fileSize: 3_670_016,
-                            thumbnailImageUrl: nil,
-                            audioURL: URL(fileURLWithPath: "")
-                        )
-            ).padding(.horizontal,20)
+            MiniPlayer()
+            .padding(.horizontal,20)
         }.task {
            try? await YouTubeExtractor.extractVideoInfo(from: "")
         }

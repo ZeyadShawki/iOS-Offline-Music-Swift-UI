@@ -25,7 +25,7 @@ struct SongRow: View {
             }
             Spacer()
             SongContextMenu(onAddNextPlay: {}, onDelete: {})
-        }.frame(width: .infinity, alignment: .leading)
+        }.frame(alignment: .leading)
     }
     
     private var songInfo: some View {
