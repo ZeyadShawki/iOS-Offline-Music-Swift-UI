@@ -8,12 +8,9 @@
 import SwiftUI
 
 struct WebViewPage: View {
-
-    let url: URL?
+    @EnvironmentObject var appRouter: AppRouter
     @Environment(\.dismiss) private var dismiss
-    @Binding var text: String
-    @Binding var selectedSearchEngine : IconButtonOption?
-    @Binding var searchURL: URL?
+    @ObservedObject var webViewModel: WebViewModel
     
     // Download state
     @State private var currentURL: String = ""
@@ -48,19 +45,19 @@ struct WebViewPage: View {
             HStack {
                 navigationBar
                 ReusableTextField(
-                    text: $text,
+                    text: $webViewModel.text,
                     placeHolder: "Search or enter web address",
                     title: nil,
                     buttonOptions: searchEngineOptions,
-                    selectedOption: $selectedSearchEngine,
+                    selectedOption: $webViewModel.selectedSearchEngine,
                     onSearch: onSearch
                 )
                 Spacer().frame(width: 30)
             }
             ZStack(alignment: .topLeading) {
-                if let url = url {
+                if let url = webViewModel.searchURL {
                     WebView(url: url,
-                            currentURL: ($currentURL)) { newURL in
+                            currentURL: $currentURL) { newURL in
                                     handleURLChange(newURL)
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -145,11 +142,11 @@ struct WebViewPage: View {
     }
     
     func onSearch() {
-        guard let selected = selectedSearchEngine else { return }
-        let engine = selected.searchEngine
-        searchURL = WebViewSearchHelper.buildSearchURL(query: text, engine: engine)
-        // Navigate to WebView page
-        
+        guard let selected = webViewModel.selectedSearchEngine else { return }
+        webViewModel.searchURL = WebViewSearchHelper.buildSearchURL(query: webViewModel.text, engine: selected.searchEngine)
+        if let search = webViewModel.searchURL {
+            currentURL = search.absoluteString
+        }
     }
     
     private var navigationBar: some View {
@@ -227,10 +224,11 @@ struct WebViewPage: View {
 #Preview {
     NavigationStack {
         WebViewPage(
-            url: URL(string: "https://www.youtube.com/watch?v=YQHsXMglC9A&list=RDYQHsXMglC9A&start_radio=1"),
-            text: .constant(""),
-            selectedSearchEngine: .constant(nil),
-            searchURL: .constant(nil)
+            webViewModel: WebViewModel(
+                text: "",
+                selectedSearchEngine: nil,
+                searchURL: URL(string: "https://www.youtube.com/watch?v=YQHsXMglC9A&list=RDYQHsXMglC9A&start_radio=1")
+            )
         )
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct Playlist: Identifiable  {
+struct Playlist: Identifiable {
     let id : UUID
     let name: String
     let songCount: Int
@@ -23,5 +23,15 @@ struct Playlist: Identifiable  {
         self.iconName = iconName
         self.overlayColor = overlayColor
         self.folderPath = folderPath
+    }
+}
+
+extension Playlist: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.id)
+    }
+    
+    static func == (lhs: Playlist, rhs: Playlist) -> Bool {
+        lhs.id == rhs.id
     }
 }

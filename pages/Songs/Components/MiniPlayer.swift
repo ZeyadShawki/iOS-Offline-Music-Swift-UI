@@ -9,15 +9,35 @@ import SwiftUI
 
 struct MiniPlayer: View {
     @EnvironmentObject var audioManager: AudioManager
+    @EnvironmentObject var appRouter: AppRouter
 
     var body: some View {
         VStack {
             GeometryReader { geometry in
-                Rectangle().fill(.orange)
-                    .frame(width: geometry.size.width * 0.3,
-                    ).cornerRadius(20)
-            }.frame(height: 10)
-            
+                ZStack(alignment: .leading) {
+                    // Background track - always visible for tapping anywhere
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .cornerRadius(20)
+
+                    // Progress fill
+                    if audioManager.progress > 0 {
+                        Rectangle()
+                            .fill(.orange)
+                            .frame(width: geometry.size.width * audioManager.progress)
+                            .cornerRadius(20)
+                    }
+                }
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            let progress = min(max(value.location.x / geometry.size.width, 0), 1)
+                            audioManager.seek(toProgress: progress)
+                        }
+                )
+            }
+            .frame(height: 10)
             HStack(spacing: 12) {
                 thumbnail(for: audioManager.currentSong)
                 songInfo(for:  audioManager.currentSong)
@@ -54,7 +74,9 @@ struct MiniPlayer: View {
             
             // Queue
                    Button(action: {
+                       guard audioManager.currentPlaylist != nil else { return }
                        // Show queue sheet
+                       appRouter.navigatePlaylist(to: .songs(playlist: audioManager.currentPlaylist!))
                    }) {
                        Image(systemName: "list.bullet")
                            .font(.system(size: 20))

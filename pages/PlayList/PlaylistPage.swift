@@ -1,5 +1,4 @@
 //
-//  DiscoveryPage.swift
 //  aboutme
 //
 //  Created by zeyad Shawki on 06/12/2025.
@@ -12,6 +11,7 @@ struct PlaylistPage: View {
     init(playlists: [Playlist]) {
         self.playlists = playlists
     }
+    @EnvironmentObject var appRouter: AppRouter
     private let playlistManager = PlaylistManager()
     @State private var playlists: [Playlist]
     @State private var isLoading = true
@@ -20,7 +20,7 @@ struct PlaylistPage: View {
     @State var isPresented = false
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $appRouter.playlistPath) {
             Group {
                 if isLoading {
                     ProgressView("Loading playlists...")
@@ -49,9 +49,10 @@ struct PlaylistPage: View {
                         }
 
                         List(playlists) { playlist in
-                            NavigationLink(
-                                destination: SongsPage(playlist: playlist)
-                            ) {
+                       
+                           Button(action: {
+                                appRouter.navigatePlaylist(to: .songs(playlist: playlist))
+                            }){
                                 PlayistRow(playlist: playlist)
                             }
                             .listRowInsets(
@@ -71,38 +72,33 @@ struct PlaylistPage: View {
                     }
                     .background(Color(.systemBackground))
                 }
-            }.padding(.horizontal)
-
-                .sheet(
-                    isPresented: $isPresented,
-                    onDismiss: {
-                        if folderName.isEmpty {
-                            return
-                        }
-                        guard
-                            let playlist = playlistManager.createPlaylist(
-                                name: folderName
-                            )
-                        else { return }
+            }
+            .padding(.horizontal)
+            .addFolderAlert(
+                isPresented: $isPresented, onCreate: { folderName in
+                    if let playlist = playlistManager.createPlaylist(name: folderName){
                         playlists.append(playlist)
-                        folderName = ""
                     }
-                ) {
-                    AddFolderSheet(
-                        folderName: $folderName,
-                        isPresented: $isPresented
-                    )
                 }
-                .task {
-                    isLoading = true
+            )
+            .task {
+                isLoading = true
 
-                    self.playlistManager.fetchPlaylists { fetched in
-                        DispatchQueue.main.async {
-                            playlists = fetched
-                            isLoading = false
-                        }
+                self.playlistManager.fetchPlaylists { fetched in
+                    DispatchQueue.main.async {
+                        playlists = fetched
+                        isLoading = false
                     }
                 }
+            }
+            .navigationDestination(for: PlaylistRoute.self) { route in
+                switch route {
+                case .songDetail(let song):
+                    EmptyView()
+                case .songs(let playlist):
+                    SongsPage(playlist: playlist)
+                }
+            }
         }
     }
 

@@ -4,8 +4,12 @@ import CoreData
 import SwiftUI
 
 class PlaylistManager {
+    
     private let context = PersistenceController.shared.container.viewContext
     private let fileManager = FileManagerHelper()
+    
+    private let defaultLikedSong = "Liked Songs"
+    
     init() {}
     
     func fetchPlaylists(completionHandler: @escaping ([Playlist])->Void ) {
@@ -40,6 +44,7 @@ class PlaylistManager {
         completionHandler(playlists)
     }
     
+    @discardableResult
     func createPlaylist(name: String) -> Playlist? {
         let playlistId = UUID()
         guard let fullPath = fileManager.createPlaylistFolder(named: name) else {
@@ -89,4 +94,19 @@ class PlaylistManager {
     }
     
     
-}
+    func createDefaultPlaylist(completionHandler: @escaping ([Playlist]?)->Void) {
+        fetchPlaylists(completionHandler: { [weak self] playlists in
+            guard let self = self else {
+                completionHandler(nil)
+                return
+            }
+            if !playlists.contains(where: { playlist in
+                return playlist.name == self.defaultLikedSong
+            }) {
+                self.createPlaylist(name: self.defaultLikedSong)
+                completionHandler(playlists)
+                return
+            }
+            completionHandler(nil)
+        })
+    }}

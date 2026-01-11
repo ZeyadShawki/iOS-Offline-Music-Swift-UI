@@ -9,10 +9,8 @@ import Foundation
 import SwiftUI
 
 struct DiscoveryPage : View {
-    @State var text: String = ""
-    @State var selectedSearchEngine : IconButtonOption?
-    @State var searchURL: URL? = nil
-    @State var showWebView = false
+    @EnvironmentObject var appRouter: AppRouter
+    @StateObject private var webViewModel = WebViewModel()
 
     var searchEngineOptions = [
         IconButtonOption(
@@ -42,15 +40,15 @@ struct DiscoveryPage : View {
     
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $appRouter.discoveryPath) {
             
             VStack {
                 ReusableTextField(
-                    text: $text,
+                    text: $webViewModel.text,
                     placeHolder: "Search or enter web address",
                     title: nil,
                     buttonOptions: searchEngineOptions,
-                    selectedOption: $selectedSearchEngine,
+                    selectedOption: $webViewModel.selectedSearchEngine,
                     onSearch: onSearch
                 )
                 OfflineSongsSection(songs: [
@@ -65,29 +63,30 @@ struct DiscoveryPage : View {
                 ], onMoreTap: {}, onSongTap: { music in
                     
                 })
-            }.frame(maxWidth: .infinity,maxHeight: .infinity,alignment: .topLeading).padding(.horizontal,10).navigationDestination(isPresented: $showWebView, ){
-                if let url = searchURL {
-                    WebViewPage(url: url,text: $text,selectedSearchEngine: $selectedSearchEngine,searchURL: $searchURL)
+            }.frame(maxWidth: .infinity,maxHeight: .infinity,alignment: .topLeading).padding(.horizontal,10)
+            .navigationDestination(for: DiscoveryRoute.self) { route in
+                switch route {
+                case .webView(let webViewModel):
+                    WebViewPage(webViewModel: webViewModel)
                 }
             }
         }
     }
     
     func onSearch() {
-        guard let selected = selectedSearchEngine else { return }
+        guard let selected = webViewModel.selectedSearchEngine else { return }
         let engine = selected.searchEngine
-        searchURL = WebViewSearchHelper.buildSearchURL(query: text, engine: engine)
+        webViewModel.searchURL = WebViewSearchHelper.buildSearchURL(query: webViewModel.text, engine: engine)
         // Navigate to WebView page
-               if searchURL != nil {
-                   showWebView = true
-               }
+        if webViewModel.searchURL != nil {
+                   appRouter.navigateDiscovery(to: .webView(webViewModel: webViewModel))
+        }
     }
     
 }
 
 #Preview {
-    DiscoveryPage(
-        text:("")  )
+    DiscoveryPage()
 }
 
 

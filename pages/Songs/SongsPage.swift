@@ -14,6 +14,7 @@ struct SongsPage: View {
 
     @State private var isLoading = true
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var appRouter: AppRouter
     @EnvironmentObject var audioManager: AudioManager
 
     // Init must use _songs for @State

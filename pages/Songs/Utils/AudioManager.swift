@@ -164,7 +164,12 @@ class AudioManager: NSObject, ObservableObject {
         setupTimeObserver()
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: AVPlayerItem.didPlayToEndTimeNotification, object: playerItem)
         currentSong = song
-        
+
+        // Set duration immediately from song metadata so seeking works right away
+        if song.duration > 0 {
+            duration = Double(song.duration)
+        }
+
         Task { @MainActor in
             if let item = playerItem {
                 do {

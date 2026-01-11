@@ -9,7 +9,7 @@ import SwiftUI
 import WebKit
 
 struct WebView: UIViewRepresentable {
-    let url: URL?
+    var url: URL
     @Binding var currentURL: String
     var onURLChange: ((String) -> Void)?
 
@@ -24,18 +24,14 @@ struct WebView: UIViewRepresentable {
         // Add KVO observer for URL changes (catches SPA navigation)
         context.coordinator.observeURL(webView)
 
-        if let url = url {
-            context.coordinator.initialURL = url
-            let request = URLRequest(url: url)
-            webView.load(request)
-        }
+        context.coordinator.initialURL = url
+        let request = URLRequest(url: url)
+        webView.load(request)
         return webView
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        // Only reload if the initial URL prop changed (not due to user navigation)
-        guard let url = url else { return }
-
+        // Only reload if the URL prop changed (not due to user navigation)
         if context.coordinator.initialURL != url {
             // The parent changed the URL prop - load the new URL
             context.coordinator.initialURL = url
