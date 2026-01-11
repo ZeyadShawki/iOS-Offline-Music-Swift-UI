@@ -18,7 +18,6 @@ class AudioManager: NSObject, ObservableObject {
     @Published var isPlaying = false
     @Published var currentTime: TimeInterval = 0
     @Published var progress: Double = 0
-    @Published var duration: TimeInterval = 0
     
     @Published var queue: [Song] = []
     @Published var currentIndex: Int = 0
@@ -164,24 +163,6 @@ class AudioManager: NSObject, ObservableObject {
         setupTimeObserver()
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: AVPlayerItem.didPlayToEndTimeNotification, object: playerItem)
         currentSong = song
-
-        // Set duration immediately from song metadata so seeking works right away
-        if song.duration > 0 {
-            duration = Double(song.duration)
-        }
-
-        Task { @MainActor in
-            if let item = playerItem {
-                do {
-                    let durationValue = try await item.asset.load(.duration)
-                    duration = CMTimeGetSeconds(durationValue)
-                } catch {
-                    print("Error loading duration: \(error)")
-                    duration = 0
-                }
-            }
-        }
-        
         player?.play()
         isPlaying = true
         updateNowPlayingInfo()
@@ -259,6 +240,9 @@ class AudioManager: NSObject, ObservableObject {
     }
     
     func seek(toProgress progress: Double) {
+        guard let duration = currentSong?.duration else {
+            return
+        }
         let clampedProgress = max(0, min(1,progress))
         let targetTime = duration * clampedProgress
         seek(to: targetTime)
@@ -286,7 +270,6 @@ class AudioManager: NSObject, ObservableObject {
         player = nil
         isPlaying = false
         currentTime = 0
-        duration = 0
         progress = 0
         currentPlaylist = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
@@ -298,10 +281,12 @@ class AudioManager: NSObject, ObservableObject {
             guard let self = self else {
                 return
             }
-            
+            guard let duration = self.currentSong?.duration else {
+                return
+            }
             self.currentTime = CMTimeGetSeconds(time)
-            if self.duration > 0 {
-                self.progress = self.currentTime / self.duration
+            if duration > 0 {
+                self.progress = self.currentTime / duration
             }
         }
     }
@@ -323,7 +308,9 @@ class AudioManager: NSObject, ObservableObject {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
             return
         }
-        
+        guard let duration = currentSong?.duration else {
+            return
+        }
         var nowPlayingInfo: [String: Any] = [
             MPMediaItemPropertyTitle: song.title,
             MPMediaItemPropertyArtist: song.artist,
@@ -350,7 +337,6 @@ extension AudioManager {
         self.init()
         self.currentSong = song
         self.isPlaying = true
-        self.duration = Double(song.duration)
         self.progress = 0.3
     }
 }

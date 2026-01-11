@@ -46,13 +46,16 @@ class SongManager: ObservableObject {
     func extractMetaData(from fileURL: URL) async -> Song {
         let asset = AVURLAsset(url: fileURL)
         do {
+            // Load metadata
             let metadata = try await asset.load(.metadata)
-            let durationValue = try await asset.load(.duration)
-            
+
+            // Get actual duration using AVAudioFile (calculates from sample count, ignores bad metadata)
+            let durationSeconds = getAudioFileDuration(from: fileURL)
+
             var title: String?
             var artist: String?
             var artworkData: Data?
-            
+
             for item in metadata {
                 guard let key = item.commonKey else { continue }
 
@@ -67,15 +70,14 @@ class SongManager: ObservableObject {
                     break
                 }
             }
-            
+
             if title == nil || title?.isEmpty == true {
                 title = fileURL.deletingPathExtension().lastPathComponent
             }
             if artist == nil || artist?.isEmpty == true {
                 artist = "Unknown Artist"
             }
-            
-            let durationSeconds = Int(CMTimeGetSeconds(durationValue))
+
             let fileSize = fileManagerHelper.getFileSize(from: fileURL)
             
             return Song(
@@ -100,7 +102,21 @@ class SongManager: ObservableObject {
             )
         }
     }
-    
-    
-    
+
+    /// Calculate actual audio duration from sample count (ignores incorrect metadata)
+    private func getAudioFileDuration(from fileURL: URL) -> Double {
+        do {
+            let audioFile = try AVAudioFile(forReading: fileURL)
+            let sampleRate = audioFile.processingFormat.sampleRate
+            let frameCount = audioFile.length
+
+            guard sampleRate > 0 else { return 0 }
+
+            let duration = Double(frameCount) / sampleRate
+            return duration
+        } catch {
+            print("Error reading audio file for duration: \(error)")
+            return 0
+        }
+    }
 }

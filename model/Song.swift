@@ -10,7 +10,7 @@ struct Song: Identifiable {
     let id: UUID
     let title: String
     let artist: String
-    let duration: Int // Duration in seconds
+    let duration: Double // Duration in seconds
     let fileSize: Int // File size in MB
     let thumbnailImageUrl: URL?
     let audioURL: URL?
@@ -19,7 +19,7 @@ struct Song: Identifiable {
         id: UUID = UUID(),
         title: String,
         artist: String,
-        duration: Int,
+        duration: Double,
         fileSize: Int,
         thumbnailImageUrl: URL? = nil,
         audioURL: URL? = nil
@@ -35,8 +35,8 @@ struct Song: Identifiable {
 
     // Format duration as "MM:SS" (e.g., "03:41")
     var formattedDuration: String {
-        let minutes = duration / 60
-        let seconds = duration % 60
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
@@ -51,15 +51,15 @@ struct Song: Identifiable {
 
 extension Array where Element == Song {
     // Total duration in seconds
-    var totalDuration: Int {
+    var totalDuration: Double {
         reduce(0) { $0 + $1.duration }
     }
 
     // Format total duration as "HH:MM:SS" or "MM:SS"
     var formattedTotalDuration: String {
-        let total = totalDuration
+        let total = Int(totalDuration)
         let hours = total / 3600
-        let minutes = (total % 3600) / 60
+        let minutes = ( total % 3600) / 60
         let seconds = total % 60
 
         if hours > 0 {
