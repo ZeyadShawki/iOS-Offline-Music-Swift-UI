@@ -7,38 +7,24 @@
 
 import Foundation
 import AVFoundation
-import Combine
 
-class SongManager: ObservableObject {
-    
-    static let shared = SongManager()
-    
-    @Published var songs: [Song] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+class SongManager {
+        
     let fileManagerHelper: FileManagerHelper = FileManagerHelper()
     private let supportedFormats = ["mp3", "m4a", "aac", "wav", "flac"]
-
     
     @MainActor
-    func loadSongs(for playlist: Playlist) async -> [Song] {
+    func loadSongs(for playlist: Playlist) async throws -> [Song] {
         guard let folderPath = playlist.folderPath else {
-            errorMessage = "Playlist folder not found"
-            return []
+            throw SongError.customMessage("No Playlist Found")
         }
-        isLoading = true
-        errorMessage = nil
         let songFiles = fileManagerHelper.getURLsFromFolder(from: folderPath,supportedFormats: supportedFormats)
         var loadedSongs: [Song] = []
         
         for fileURL in songFiles {
             let song = await extractMetaData(from: fileURL)
             loadedSongs.append(song)
-
         }
-        
-        songs = loadedSongs
-        isLoading = false
         return loadedSongs
     }
     
@@ -119,4 +105,7 @@ class SongManager: ObservableObject {
             return 0
         }
     }
+}
+enum SongError: Error {
+    case customMessage(String)
 }

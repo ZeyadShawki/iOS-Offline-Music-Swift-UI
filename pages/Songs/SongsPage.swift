@@ -10,12 +10,14 @@ import SwiftUI
 
 struct SongsPage: View {
     let playlist: Playlist
+    private let songManager = SongManager()
     @State private var songs: [Song] = []
 
     @State private var isLoading = true
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appRouter: AppRouter
     @EnvironmentObject var audioManager: AudioManager
+    @State var errorMessage: String?
 
     // Init must use _songs for @State
     init(playlist: Playlist, songs: [Song] = []) {
@@ -39,7 +41,13 @@ struct SongsPage: View {
             }
         }.padding(.horizontal).task {
             isLoading = true
-            songs = await SongManager.shared.loadSongs(for: playlist)
+            do {
+                songs = try await songManager.loadSongs(for: playlist)
+            } catch SongError.customMessage(let message) {
+                print("Error: \(message)")
+            } catch {
+                print("Other error: \(error)")
+            }
             isLoading = false
         }
     }

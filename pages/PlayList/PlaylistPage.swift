@@ -83,13 +83,8 @@ struct PlaylistPage: View {
             )
             .task {
                 isLoading = true
-
-                self.playlistManager.fetchPlaylists { fetched in
-                    DispatchQueue.main.async {
-                        playlists = fetched
-                        isLoading = false
-                    }
-                }
+                playlists = await playlistManager.fetchPlaylists()
+                isLoading = false
             }
             .navigationDestination(for: PlaylistRoute.self) { route in
                 switch route {

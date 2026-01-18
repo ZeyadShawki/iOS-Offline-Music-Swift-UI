@@ -27,7 +27,8 @@ class AudioManager: NSObject, ObservableObject {
     private var playerItem: AVPlayerItem?
     private var timeObserver: Any?
     private var cancellables = Set<AnyCancellable>()
-    
+    private let snapshotManager = SnapshotManager()
+
     override init() {
         super.init()
     }
@@ -166,6 +167,10 @@ class AudioManager: NSObject, ObservableObject {
         player?.play()
         isPlaying = true
         updateNowPlayingInfo()
+        Task.detached {  [weak self] in
+            guard let self = self else { return }
+            try await self.snapshotManager.saveLastPlayedSong(song: song, playlist: self.currentPlaylist!)
+        }
     }
     
     func play(songs: [Song], startingAt index: Int = 0) {

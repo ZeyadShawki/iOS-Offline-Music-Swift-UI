@@ -12,36 +12,42 @@ class PlaylistManager {
     
     init() {}
     
-    func fetchPlaylists(completionHandler: @escaping ([Playlist])->Void ) {
+    func fetchPlaylists() async -> [Playlist] {
         var playlists: [Playlist] = []
-        context.performAndWait {
+        await context.perform { [weak self] in
+            guard let self = self else { return }
             let request: NSFetchRequest<PlaylistEntity> = PlaylistEntity.fetchRequest()
             do {
-                let entities = try context.fetch(request)
-
+                let entities = try self.context.fetch(request)
+                
                 playlists = entities.compactMap { entity -> Playlist? in
-                    let relativePath = entity.path ?? ""
-                    let url = fileManager.getFullPath(from: relativePath)
-
-                    guard FileManager.default.fileExists(atPath: url.path) else {
-                        return nil
-                    }
-
-                    let songCount = fileManager.getSongCount(from: url.path)
-                    return Playlist(
-                        id: entity.id ?? UUID(),
-                        name: entity.name ?? "",
-                        songCount: songCount,
-                        iconName: "heart.fill",
-                        overlayColor: .blue,
-                        folderPath: url
-                    )
+                    return self.mapPlaylist(entity: entity)
                 }
             } catch {
                 // Error fetching playlists
+                print("Error Fetching playlis \(error.localizedDescription)")
             }
         }
-        completionHandler(playlists)
+        return playlists
+    }
+    
+    func mapPlaylist(entity: PlaylistEntity) -> Playlist? {
+        let relativePath = entity.path ?? ""
+        let url = fileManager.getFullPath(from: relativePath)
+        
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return nil
+        }
+        
+        let songCount = fileManager.getSongCount(from: url.path)
+        return Playlist(
+            id: entity.id ?? UUID(),
+            name: entity.name ?? "",
+            songCount: songCount,
+            iconName: "heart.fill",
+            overlayColor: .blue,
+            folderPath: url
+        )
     }
     
     @discardableResult
@@ -50,7 +56,7 @@ class PlaylistManager {
         guard let fullPath = fileManager.createPlaylistFolder(named: name) else {
             return nil
         }
-
+        
         let relativePath = fileManager.getRelativePath(for: name)
         let entity = PlaylistEntity(context: context)
         entity.id = playlistId
@@ -58,7 +64,7 @@ class PlaylistManager {
         entity.icon = "heart.fill"
         entity.overlayColor = Color.blue.description
         entity.path = relativePath
-
+        
         do {
             if context.hasChanges {
                 try context.save()
@@ -81,7 +87,7 @@ class PlaylistManager {
         fileManager.deletePlaylistFolder(from: folderPath)
         let request: NSFetchRequest<PlaylistEntity> = PlaylistEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", playlist.id as CVarArg)
-
+        
         do {
             let results = try context.fetch(request)
             for entity in results {
@@ -93,20 +99,29 @@ class PlaylistManager {
         }
     }
     
+    @discardableResult
+    func createDefaultPlaylist() async -> [Playlist]? {
+        let playlists = await fetchPlaylists()
+     
+        if !playlists.contains(where: { playlist in
+            return playlist.name == self.defaultLikedSong
+        }) {
+            self.createPlaylist(name: self.defaultLikedSong)
+            return playlists
+        }
+        return nil
+    }
+
+    func getPlaylist(byPath path: String) async throws -> Playlist? {
+        try await context.perform {
+            let request: NSFetchRequest<PlaylistEntity> = PlaylistEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "path == %@", path)
+            request.fetchLimit = 1
+            if let entity = try self.context.fetch(request).first {
+                return self.mapPlaylist(entity: entity)
+            }
+            return nil
+        }
+    }
     
-    func createDefaultPlaylist(completionHandler: @escaping ([Playlist]?)->Void) {
-        fetchPlaylists(completionHandler: { [weak self] playlists in
-            guard let self = self else {
-                completionHandler(nil)
-                return
-            }
-            if !playlists.contains(where: { playlist in
-                return playlist.name == self.defaultLikedSong
-            }) {
-                self.createPlaylist(name: self.defaultLikedSong)
-                completionHandler(playlists)
-                return
-            }
-            completionHandler(nil)
-        })
-    }}
+}

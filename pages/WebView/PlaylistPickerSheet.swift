@@ -50,10 +50,10 @@ struct PlaylistPickerSheet:
                     }
                 }
             }.task {
-                playlistManager.fetchPlaylists() { fetched in
-                    playlists = fetched
-                    isLoading = false
-                }
+                isLoading = true
+                playlists = await playlistManager.fetchPlaylists()
+                isLoading = false
+
             }
     }
     
