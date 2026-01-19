@@ -150,7 +150,7 @@ class AudioManager: NSObject, ObservableObject {
         
     }
     
-    func play(song: Song) {
+    func loadSong(song: Song, playIt: Bool = true) {
         guard let audioURL = song.audioURL else {
             print("No audio  URL for song: \(song.title)")
             return
@@ -164,8 +164,10 @@ class AudioManager: NSObject, ObservableObject {
         setupTimeObserver()
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: AVPlayerItem.didPlayToEndTimeNotification, object: playerItem)
         currentSong = song
-        player?.play()
-        isPlaying = true
+        if playIt {
+            player?.play()
+            isPlaying = true
+        }
         updateNowPlayingInfo()
         Task.detached {  [weak self] in
             guard let self = self else { return }
@@ -195,7 +197,7 @@ class AudioManager: NSObject, ObservableObject {
             currentIndex = min(index,songs.count - 1)
         }
        let song = queue[currentIndex]
-       play(song: song)
+        loadSong(song: song)
     }
     
     func pause() {
@@ -225,7 +227,7 @@ class AudioManager: NSObject, ObservableObject {
         }
         currentIndex = currentIndex < queue.count - 1 ? currentIndex + 1 : 0
         let song = queue[currentIndex]
-        play(song: song)
+        loadSong(song: song)
     }
     
     func previous() {
@@ -233,8 +235,9 @@ class AudioManager: NSObject, ObservableObject {
             return
         }
         currentIndex = currentIndex < queue.count - 1 ? currentIndex - 1 : queue.count - 1
+        currentIndex = currentIndex < 0 ? queue.count - 1 : currentIndex
         let song = queue[currentIndex]
-        play(song: song)
+        loadSong(song: song)
     }
     
     func seek(to time: TimeInterval) {

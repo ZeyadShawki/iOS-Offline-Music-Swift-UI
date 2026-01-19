@@ -9,16 +9,18 @@ import Foundation
 import CoreData
 
 class SnapshotManager {
-    
+
     private let context = PersistenceController.shared.container.viewContext
     private let entityName = "LastSongEntity"
-    
+    private let fileManager = FileManagerHelper()
+
     func saveLastPlayedSong(song: Song, playlist: Playlist) async throws {
         let entity = LastSongEntity(context: context)
         entity.id = UUID()
         entity.createdAt = Date()
-        entity.playlistPath = song.audioURL?.path()
-        entity.playlistPath = playlist.folderPath?.path()
+        entity.songPath = song.audioURL?.path()
+        entity.songName = song.title
+        entity.playlistPath = fileManager.getRelativePath(for: playlist.name)
         
         if context.hasChanges {
             try context.save()

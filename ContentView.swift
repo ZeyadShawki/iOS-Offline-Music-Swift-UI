@@ -52,9 +52,7 @@ struct ContentView: View {
     
     func getLastSnapshot() async throws {
         guard let lastPlayedSong = try await  snapshotManager.getLastPlayedSong() else { return }
-        Task.detached {
-             try? await snapshotManager.deleteLastRecords()
-         }
+
         guard let playlistPath = lastPlayedSong.playlistPath else {
             print("⚠️ No playlist path found for last played song")
             return
@@ -62,6 +60,8 @@ struct ContentView: View {
         guard let playlist = try await playlistManager.getPlaylist(byPath: playlistPath) else { return }
         let songs = try await songManager.loadSongs(for: playlist)
         audioManager.initQueue(songsQueue: songs, playlist: playlist)
+        guard let lastplayed = songs.first(where: { $0.title == lastPlayedSong.songName }) else { return }
+        audioManager.loadSong(song: lastplayed, playIt: false)
     }
 }
 
