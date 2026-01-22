@@ -11,7 +11,18 @@ import SwiftUI
 struct DiscoveryPage : View {
     @EnvironmentObject var appRouter: AppRouter
     @StateObject private var webViewModel = WebViewModel()
-
+    @EnvironmentObject var audioManager: AudioManager
+    @State private var songs: [Song] = []
+    @State private var playlist: Playlist?
+    @State private var isLoading = false
+    @State private var hasLoaded = false
+    
+    private let songManager = SongManager()
+    private let initialPlaylist: Playlist?
+    
+    init(playlist: Playlist? = nil) {
+        self.initialPlaylist = playlist
+    }
     var searchEngineOptions = [
         IconButtonOption(
             title: "YouTube",
@@ -24,24 +35,21 @@ struct DiscoveryPage : View {
         ),
     ]
     
-    var buttons : [IconButtonOption] = {
-         (0..<6).map  { index in
-            IconButtonOption(
-               title: "YouTube",
-               color: .red,
-               imageName: "youtube-logo",
-               action: {
-                   print("YouTube \(index) selected")
-               },
-               searchEngine: .youtube
-            )
-        }
-    }()
-    
     
     var body: some View {
-        NavigationStack(path: $appRouter.discoveryPath) {
-            
+        Group {
+
+                NavigationStack(path: $appRouter.discoveryPath) {
+                    content()
+                        .toolbar(.visible, for: .tabBar)
+                }
+
+        }
+    }
+    
+    @ViewBuilder
+    private func content() -> some View {
+        LoadingView(isShowing: $isLoading,) {
             VStack {
                 ReusableTextField(
                     text: $webViewModel.text,
@@ -51,26 +59,43 @@ struct DiscoveryPage : View {
                     selectedOption: $webViewModel.selectedSearchEngine,
                     onSearch: onSearch
                 )
-                OfflineSongsSection(songs: [
-                    Song(
-                        title: "Amr Diab - Ayyam We Ben'eshha",
-                        artist: "Rotana",
-                        duration: 195,
-                        fileSize: 3_670_016,
-                        thumbnailImageUrl: nil,
-                        audioURL: URL(fileURLWithPath: "")
-                    ),
-                ], onMoreTap: {}, onSongTap: { music in
-                    
+                
+                OfflineSongsSection(songs: songs, onMoreTap: {
+                    appRouter.navigatePlaylist(to: .songs(playlist: playlist!))
+                }, onSongTap: { music in
+                    audioManager.initQueue(songsQueue: songs, playlist: playlist!)
+                    audioManager.loadSong(song: music, playIt: true)
                 })
-            }.frame(maxWidth: .infinity,maxHeight: .infinity,alignment: .topLeading).padding(.horizontal,10)
-            .navigationDestination(for: DiscoveryRoute.self) { route in
-                switch route {
-                case .webView(let webViewModel):
-                    WebViewPage(webViewModel: webViewModel)
+            }}.frame(maxWidth: .infinity,maxHeight: .infinity,alignment: .topLeading).padding(.horizontal,10)
+                .navigationDestination(for: DiscoveryRoute.self) { route in
+                    switch route {
+                    case .webView(let webViewModel):
+                        WebViewPage(webViewModel: webViewModel)
+                    }
+                }.task {
+                    guard !hasLoaded else { return }
+                    hasLoaded = true
+                    
+                    playlist = initialPlaylist
+                    await loadSongs()
                 }
-            }
+    }
+    
+    private func loadSongs() async {
+        guard let playlist = playlist else {
+            songs = []
+            return
         }
+        
+        isLoading = true
+        do {
+            songs = try await songManager.loadSongs(for: playlist)
+            print("✅ Loaded \(songs.count) songs for playlist: \(playlist.name)")
+        } catch {
+            print("❌ Error loading songs: \(error)")
+            songs = []
+        }
+        isLoading = false
     }
     
     func onSearch() {

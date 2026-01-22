@@ -13,40 +13,54 @@ struct ContentView: View {
     let audioManager = AudioManager.shared
     let snapshotManager = SnapshotManager()
     let songManager = SongManager()
+    @State private var lastPlayedlist: Playlist?
 
-    @State private var isLoading = false
+    @State private var isLoading = true
+    @State private var isInitialized = false
+    @State private var hasLoaded = false
+    
     var body: some View {
         LoadingView(isShowing: $isLoading) {
-            ZStack (alignment: .bottom){
-                TabView(selection: $appRouter.selectedTab){
-                    DiscoveryPage()
-                        .tag(Tab.discovery)
-                        .tabItem {
-                            Label("Discovery", systemImage: "safari.fill")
-                        }
-                    PlaylistPage(playlists: [])
-                        .tag(Tab.playlist)
-                        .tabItem {
-                            Label("PlayList", systemImage: "books.vertical.fill")
-                        }
-                    SettingPage()
-                        .tag(Tab.settings)
-                        .tabItem {
-                            Label("Setting", systemImage: "gear")
-                        }
-                }.padding(.bottom, 60)
-                MiniPlayer()
-                    .padding(.horizontal,20)
-            }.environmentObject(appRouter).task {
-                isLoading = true
-                await playlistManager.createDefaultPlaylist()
-                do {
-                    try await getLastSnapshot()
-                } catch {
-                    print("error fetching playlist \(error.localizedDescription)")
-                }
-                isLoading = false
-            }.environmentObject(audioManager)
+            if isInitialized {
+                ZStack (alignment: .bottom){
+                    TabView(selection: $appRouter.selectedTab){
+                        DiscoveryPage(playlist: lastPlayedlist)
+                            .id(lastPlayedlist?.id)
+                            .tag(Tab.discovery)
+                            .tabItem {
+                                Label("Discovery", systemImage: "safari.fill")
+                            }
+                        PlaylistPage(playlists: [])
+                            .tag(Tab.playlist)
+                            .tabItem {
+                                Label("PlayList", systemImage: "books.vertical.fill")
+                            }
+                        SettingPage()
+                            .tag(Tab.settings)
+                            .tabItem {
+                                Label("Setting", systemImage: "gear")
+                            }
+                    }.padding(.bottom, 60)
+                    MiniPlayer()
+                        .padding(.horizontal,20)
+                }.environmentObject(appRouter)
+                    .environmentObject(audioManager)
+            }
+        }
+        .task {
+            guard !hasLoaded else { return }
+            hasLoaded = true
+            
+            let playlists = await playlistManager.createDefaultPlaylist()
+            lastPlayedlist = playlists?.first(where: {$0.name == playlistManager.defaultLikedSong})
+            print("playlists  \(playlists)")
+            do {
+                try await getLastSnapshot()
+            } catch {
+                print("error fetching playlist \(error.localizedDescription)")
+            }
+            isInitialized = true
+            isLoading = false
         }
     }
     
@@ -57,11 +71,14 @@ struct ContentView: View {
             print("⚠️ No playlist path found for last played song")
             return
         }
-        guard let playlist = try await playlistManager.getPlaylist(byPath: playlistPath) else { return }
+        guard let playlist = try await playlistManager.getPlaylist(byPath: playlistPath) else {
+            return
+        }
         let songs = try await songManager.loadSongs(for: playlist)
         audioManager.initQueue(songsQueue: songs, playlist: playlist)
         guard let lastplayed = songs.first(where: { $0.title == lastPlayedSong.songName }) else { return }
         audioManager.loadSong(song: lastplayed, playIt: false)
+        lastPlayedlist = playlist
     }
 }
 

@@ -25,7 +25,7 @@ struct OfflineSongsSection: View {
             
             // Songs List
             if songs.isEmpty {
-                VStack(spacing: 8) {
+                VStack(spacing: 10) {
                     Image(systemName: "music.note.list")
                         .font(.system(size: 40))
                         .foregroundColor(.gray.opacity(0.5))
@@ -36,7 +36,7 @@ struct OfflineSongsSection: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
             } else {
-                LazyVStack(spacing: 0) {
+                VStack(spacing: 0) {
                     ForEach(songs) { song in
                         OfflineSongItem(song: song) {
                             onSongTap(song)
@@ -45,8 +45,7 @@ struct OfflineSongsSection: View {
                         // Divider (except for last item)
                         if song.id != songs.last?.id {
                             Divider()
-                                .background(Color.gray.opacity(0.3))
-                                .padding(.leading, 72) // Align with text, not thumbnail
+                                .padding(.leading, 88) // Align with text after thumbnail (60px + 12px spacing + 16px padding)
                         }
                     }
                 }
@@ -60,7 +59,15 @@ struct OfflineSongsSection: View {
     OfflineSongsSection(songs: [
         
         Song( id: UUID(),
-              title: "كليب صادفت الحب وقولت اجرب ( البت عرفت بعد...",
+              title: "wdsdsdsdsdsdsddsdsdd Video)",
+              artist: "SSS",
+              duration: 30,
+              fileSize: 40,
+              thumbnailImageUrl: URL(filePath: "ss"),
+              audioURL:  URL(filePath: "ss"),
+          ),
+        Song( id: UUID(),
+              title: "wdsdsdsdsdsdsddsdsdd Video)",
               artist: "SSS",
               duration: 30,
               fileSize: 40,

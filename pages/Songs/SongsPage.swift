@@ -19,7 +19,6 @@ struct SongsPage: View {
     @EnvironmentObject var audioManager: AudioManager
     @State var errorMessage: String?
 
-    // Init must use _songs for @State
     init(playlist: Playlist, songs: [Song] = []) {
         self.playlist = playlist
         _songs = State(initialValue: songs)

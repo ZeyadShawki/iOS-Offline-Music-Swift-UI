@@ -15,15 +15,21 @@ class SnapshotManager {
     private let fileManager = FileManagerHelper()
 
     func saveLastPlayedSong(song: Song, playlist: Playlist) async throws {
-        let entity = LastSongEntity(context: context)
-        entity.id = UUID()
-        entity.createdAt = Date()
-        entity.songPath = song.audioURL?.path()
-        entity.songName = song.title
-        entity.playlistPath = fileManager.getRelativePath(for: playlist.name)
+        // Delete all existing records first to keep only the latest
+        try await deleteLastRecords()
         
-        if context.hasChanges {
-            try context.save()
+        try await context.perform { [weak self] in
+            guard let self = self else { return }
+            
+            // Create new entity with current song
+            let entity = LastSongEntity(context: self.context)
+            entity.id = UUID()
+            entity.createdAt = Date()
+            entity.songPath = song.audioURL?.path()
+            entity.songName = song.title
+            entity.playlistPath = self.fileManager.getRelativePath(for: playlist.name)
+            
+            try self.context.save()
         }
     }
     

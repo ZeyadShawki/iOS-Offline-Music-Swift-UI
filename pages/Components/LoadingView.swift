@@ -9,7 +9,7 @@ import SwiftUI
 
 struct LoadingView<Content>: View where Content: View {
     @Binding var isShowing: Bool
-    var content: () -> Content
+    @ViewBuilder var content: () -> Content
     var loadingText: String? = nil
     
     var body: some View {

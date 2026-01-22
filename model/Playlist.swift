@@ -35,3 +35,15 @@ extension Playlist: Hashable {
         lhs.id == rhs.id
     }
 }
+
+extension Playlist {
+  static func makeTestPlaylist() -> Playlist {
+        return Playlist(
+            name: "Chill Vibes",
+            songCount: 15,
+            iconName: "music.note.list",
+            overlayColor: .blue.opacity(0.6),
+            folderPath: URL(string: "file:///Users/zeyad/Music/ChillVibes")
+        )
+    }
+}

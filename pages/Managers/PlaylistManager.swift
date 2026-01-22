@@ -8,27 +8,26 @@ class PlaylistManager {
     private let context = PersistenceController.shared.container.viewContext
     private let fileManager = FileManagerHelper()
     
-    private let defaultLikedSong = "Liked Songs"
+    let defaultLikedSong = "Liked Songs"
     
     init() {}
     
     func fetchPlaylists() async -> [Playlist] {
-        var playlists: [Playlist] = []
-        await context.perform { [weak self] in
-            guard let self = self else { return }
+        return await context.perform { [weak self] in
+            guard let self = self else { return [] }
             let request: NSFetchRequest<PlaylistEntity> = PlaylistEntity.fetchRequest()
             do {
                 let entities = try self.context.fetch(request)
                 
-                playlists = entities.compactMap { entity -> Playlist? in
+                return entities.compactMap { entity -> Playlist? in
                     return self.mapPlaylist(entity: entity)
                 }
             } catch {
                 // Error fetching playlists
                 print("Error Fetching playlis \(error.localizedDescription)")
+                return []
             }
         }
-        return playlists
     }
     
     func mapPlaylist(entity: PlaylistEntity) -> Playlist? {
@@ -107,9 +106,10 @@ class PlaylistManager {
             return playlist.name == self.defaultLikedSong
         }) {
             self.createPlaylist(name: self.defaultLikedSong)
-            return playlists
+            // Fetch again to include the newly created playlist
+            return await fetchPlaylists()
         }
-        return nil
+        return playlists
     }
 
     func getPlaylist(byPath path: String) async throws -> Playlist? {
