@@ -48,7 +48,7 @@ struct OfflineSongItem: View {
                             .foregroundColor(.orange)
                             .font(.system(size: 10))
                         
-                        Text(song.artist ?? "Unknown Artist")
+                        Text(song.artist)
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                         
@@ -56,7 +56,7 @@ struct OfflineSongItem: View {
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                         
-                        Text(song.duration.formatted())
+                        Text(song.formattedDuration)
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
