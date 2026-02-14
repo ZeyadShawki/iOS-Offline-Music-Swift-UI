@@ -53,7 +53,7 @@ struct ContentView: View {
             
             let playlists = await playlistManager.createDefaultPlaylist()
             lastPlayedlist = playlists?.first(where: {$0.name == playlistManager.defaultLikedSong})
-            print("playlists  \(playlists)")
+            print("playlists  \(String(describing: playlists))")
             do {
                 try await getLastSnapshot()
             } catch {

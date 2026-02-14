@@ -15,10 +15,10 @@ struct WebViewSearchHelper {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else { return nil }
         
-        let url = parseAsURL(trimmedQuery)
+        _ = parseAsURL(trimmedQuery)
         
         let urlLast = buildSearchQueryURL(query: query, engine: engine)
-        print("urlll \( urlLast)")
+        print("urlll \( urlLast, default: "nil")")
         return urlLast
     }
     

@@ -46,6 +46,7 @@ struct WebView: UIViewRepresentable {
      }
 
     // Add the Coordinator class
+    @MainActor
     class Coordinator: NSObject, WKNavigationDelegate {
         var parent: WebView
         private var urlObservation: NSKeyValueObservation?
@@ -58,15 +59,15 @@ struct WebView: UIViewRepresentable {
 
         func observeURL(_ webView: WKWebView) {
             // KVO to detect URL changes from JavaScript navigation (SPA)
-            urlObservation = webView.observe(\.url, options: [.new]) { [weak self] webView, change in
-                guard let self = self,
-                      let newURL = webView.url?.absoluteString,
-                      newURL != self.lastReportedURL else { return }
-
-                print("👁️ KVO URL Changed: \(newURL)")
-                self.lastReportedURL = newURL
-
-                DispatchQueue.main.async {
+            urlObservation = webView.observe(\.url, options: [.new]) { [weak self] _, change in
+                guard let newURL = change.newValue?? .absoluteString else { return }
+                
+                Task { @MainActor in
+                    guard let self = self,
+                    newURL != self.lastReportedURL else { return }
+                    
+                    print("👁️ KVO URL Changed: \(newURL)")
+                    self.lastReportedURL = newURL
                     self.parent.currentURL = newURL
                     self.parent.onURLChange?(newURL)
                 }
@@ -86,12 +87,11 @@ struct WebView: UIViewRepresentable {
             }
         }
 
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
             if let urlString = navigationAction.request.url?.absoluteString {
                 print("🧭 decidePolicyFor URL: \(urlString)")
             }
-            decisionHandler(.allow)
+            return .allow
         }
 
         deinit {
