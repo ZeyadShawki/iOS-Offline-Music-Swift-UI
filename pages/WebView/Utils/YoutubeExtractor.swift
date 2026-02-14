@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import YouTubeKit
+@preconcurrency import YouTubeKit
 
 class YouTubeExtractor {
     
@@ -186,7 +186,7 @@ class YouTubeExtractor {
     }
 }
 
-extension AudioCodec: Hashable {
+extension AudioCodec: @retroactive Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(self.description)
     }

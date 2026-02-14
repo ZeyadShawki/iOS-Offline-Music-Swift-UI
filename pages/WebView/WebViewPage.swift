@@ -76,7 +76,9 @@ struct WebViewPage: View {
             .sheet(isPresented: $showPlaylistPicker) {
                 if let videoInfo = extractedVideoInfo {
                     PlaylistPickerSheet(videoInfo: videoInfo) { playlist in
-                        downloadManager.startDownload(videoInfo: videoInfo, to: playlist)
+                        Task { @MainActor in
+                            await downloadManager.startDownload(videoInfo: videoInfo, to: playlist)
+                        }
                     }
                 }
             }
