@@ -118,12 +118,12 @@ class DownloadManager: NSObject, ObservableObject {
         print("📥 startDownload called for: \(videoInfo.title)")
         print("📥 Playlist: \(playlist.name)")
 
-        guard let audioURL = videoInfo.audioStreamURL else {
-            print("❌ No audio stream URL found")
+        guard let videoURL = videoInfo.videoStreamURL else {
+            print("❌ No video stream URL found")
             return
         }
 
-        print("📥 Audio URL: \(audioURL)")
+        print("📥 Video URL: \(videoURL)")
 
         let task = DownloadTask(
             videoInfo: videoInfo,
@@ -147,7 +147,7 @@ class DownloadManager: NSObject, ObservableObject {
             id: task.id.uuidString
         )
 
-        var request = URLRequest(url: audioURL)
+        var request = URLRequest(url: videoURL)
         request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
 
         let downloadTask = backgroundSession.downloadTask(with: request)
@@ -163,7 +163,7 @@ class DownloadManager: NSObject, ObservableObject {
         let playlist = task.destinationPlaylist
 
         do {
-            let fileExtension = videoInfo.audioMimeType?.fileExtension ?? "m4a"
+            let fileExtension = videoInfo.videoCodec?.fileExtension ?? "mp4"
             let filename =
                 fileHelper.sanitizeFilename(videoInfo.title)
                 + ".\(fileExtension)"

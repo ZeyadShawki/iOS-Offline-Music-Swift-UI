@@ -14,8 +14,8 @@ struct YouTubeVideoInfo: Identifiable {
     let channelName: String
     let duration: Int?
     let thumbnailURL: URL?
-    let audioStreamURL: URL?
-    let audioMimeType: AudioCodec?
+    let videoStreamURL: URL?
+    let videoCodec: VideoCodec?
 }
 
 extension Int? {
@@ -27,19 +27,19 @@ extension Int? {
     }
 }
 
-extension AudioCodec {
+extension VideoCodec {
     var fileExtension: String {
         switch self {
-        case .mp4a:
-            return "m4a"
-        case .opus:
-            return "opus"
+        case .avc1:
+            return "mp4"
+        case .mp4v:
+            return "mp4"
+        case .av1:
+            return "mp4"
+        case .vp9:
+            return "webm"
         case .unknown:
-            return "m4a"
-        case .ec3:
-            return "ec3"
-        case .ac3:
-            return "ac3"
+            return "mp4"
         }
     }
 }

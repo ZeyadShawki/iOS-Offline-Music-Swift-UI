@@ -42,19 +42,21 @@ struct PlaylistPickerSheet:
                     }.listStyle(.plain)
                 }
             }
-        }.navigationTitle("Save to Playlist").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Save to Playlist")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
-            }.task {
+            }
+            .task {
                 isLoading = true
                 playlists = await playlistManager.fetchPlaylists()
                 isLoading = false
-
             }
+        }
     }
     
     private var emptyState: some View {
@@ -104,9 +106,9 @@ struct PlaylistPickerSheet:
         channelName: "Zeyad Dev Channel",
         duration: 372, // 6 min 12 sec
         thumbnailURL: URL(string: "https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg"),
-        audioStreamURL: URL(string: "https://example.com/audio.mp3"),
-        audioMimeType: .mp4a(version: "22")
+        videoStreamURL: URL(string: "https://example.com/video.mp4"),
+        videoCodec: .avc1(version: "640028")
     ), onPlaylistSelected: { playlist in
-        
+
     })
 }

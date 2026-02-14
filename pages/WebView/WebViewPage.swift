@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import YouTubeKit
 
 struct WebViewPage: View {
     @EnvironmentObject var appRouter: AppRouter
@@ -16,11 +15,8 @@ struct WebViewPage: View {
     // Download state
     @State private var currentURL: String = ""
     @State private var extractedVideoInfo: YouTubeVideoInfo?
-    @State private var showPlaylistPicker = false
     @State private var isLoading = false
     @StateObject private var downloadManager = DownloadManager.shared
-    @State private var showQualityPicker = false
-    @State private var availableQualities: [AudioQualityOption] = []
     @State private var isValidYoutubeVideo = false
 
     var searchEngineOptions = [
@@ -54,7 +50,7 @@ struct WebViewPage: View {
                     // Download button - shows when video info extracted
                     if isValidYoutubeVideo {
                         DownloadOverlayButton {
-                            getAudioQualities()
+                            downloadVideo()
                         }
                     }
                     
@@ -70,30 +66,13 @@ struct WebViewPage: View {
                 }
                 .navigationBarHidden(true)
             }
-            .alert("Select Audio Quality", isPresented: $showQualityPicker) {
-                qualityPickerButtons
-            }
-            .sheet(isPresented: $showPlaylistPicker) {
-                if let videoInfo = extractedVideoInfo {
-                    PlaylistPickerSheet(videoInfo: videoInfo) { playlist in
-                        Task { @MainActor in
-                            await downloadManager.startDownload(videoInfo: videoInfo, to: playlist)
-                        }
+            .sheet(item: $extractedVideoInfo) { videoInfo in
+                PlaylistPickerSheet(videoInfo: videoInfo) { playlist in
+                    Task { @MainActor in
+                        await downloadManager.startDownload(videoInfo: videoInfo, to: playlist)
                     }
                 }
             }
-        }
-    }
-    
-    @ViewBuilder
-    var qualityPickerButtons: some View {
-        Group {
-            ForEach(availableQualities, id: \.self) { option in
-                Button(option.description) {
-                    extractVideoInfo(from: currentURL, audioCodec: option.codec)
-                }
-            }
-            Button("Cancel", role: .cancel) { }
         }
     }
     
@@ -125,59 +104,19 @@ struct WebViewPage: View {
         }
     }
     
-    private func extractVideoInfo(from urlString: String,audioCodec: AudioCodec) {
-        print("🚀 Starting extraction for: \(urlString)")
+    private func downloadVideo() {
         isLoading = true
         Task {
             do {
-                let videoInfo = try await YouTubeExtractor.extractVideoInfo(from: urlString,audioCodec: audioCodec)
+                let videoInfo = try await YouTubeExtractor.extractVideoInfo(from: currentURL)
                 await MainActor.run {
-                    if let videoInfo = videoInfo {
-                        print("✅ Extraction successful!")
-                        print("📝 Title: \(videoInfo.title)")
-                        print("🔊 Audio URL: \(videoInfo.audioStreamURL?.absoluteString ?? "nil")")
-                        extractedVideoInfo = videoInfo
-                        showPlaylistPicker = true
-                    } else {
-                        print("❌ Extraction returned nil video info")
-                        extractedVideoInfo = nil
-                    }
+                    extractedVideoInfo = videoInfo
                     isLoading = false
                 }
             } catch {
-                print("❌ Failed to extract video info: \(error)")
                 await MainActor.run {
-                    extractedVideoInfo = nil
                     isLoading = false
                 }
-            }
-        }
-    }
-    
-    func getAudioQualities() {
-        print("🔍 Getting audio qualities for URL: \(currentURL)")
-        isLoading = true
-        Task {
-            do {
-                let qualities = try await YouTubeExtractor.getVideoAvailableAudioQualities(from: currentURL)
-                print("✅ Found \(qualities.count) qualities: \(qualities.map { $0.description })")
-                await MainActor.run {
-                    availableQualities = qualities
-                    if qualities.isEmpty {
-                        print("⚠️ No qualities available, not showing picker")
-                    } else {
-                        print("📱 Showing quality picker with \(qualities.count) options")
-                        showQualityPicker = true
-                    }
-                    isLoading = false
-
-                }
-            } catch {
-                print("❌ Error getAudioQualities: \(error)")
-                await MainActor.run {
-                    availableQualities = []
-                }
-                isLoading = false
             }
         }
     }
