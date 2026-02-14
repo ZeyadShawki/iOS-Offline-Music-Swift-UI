@@ -10,6 +10,7 @@ import AVFoundation
 import MediaPlayer
 import Combine
 
+@MainActor
 class AudioManager: NSObject, ObservableObject {
     static let shared = AudioManager()
     
@@ -54,7 +55,7 @@ class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    private func setupRemoteCommands() {
+    private func setupRemoteCommands() async {
         let commandCenter = MPRemoteCommandCenter.shared()
         
         commandCenter.playCommand.isEnabled = true
@@ -96,8 +97,9 @@ class AudioManager: NSObject, ObservableObject {
             guard let event = event as? MPChangePlaybackPositionCommandEvent else {
                 return .commandFailed
             }
-            
-            self?.seek(to: event.positionTime)
+            Task { @MainActor in
+               await self?.seek(to: event.positionTime)
+            }
             return .success
         }
     }
@@ -240,20 +242,19 @@ class AudioManager: NSObject, ObservableObject {
         loadSong(song: song)
     }
     
-    func seek(to time: TimeInterval) {
+    func seek(to time: TimeInterval) async {
         let cmTime = CMTime(seconds:time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        player?.seek(to: cmTime) { [weak self] _ in
-            self?.updateNowPlayingInfo()
-        }
+        await player?.seek(to: cmTime)
+        self.updateNowPlayingInfo()
     }
     
-    func seek(toProgress progress: Double) {
+    func seek(toProgress progress: Double) async {
         guard let duration = currentSong?.duration else {
             return
         }
         let clampedProgress = max(0, min(1,progress))
         let targetTime = duration * clampedProgress
-        seek(to: targetTime)
+        await seek(to: targetTime)
     }
     
     func addToQueue(song: Song) {
@@ -289,12 +290,14 @@ class AudioManager: NSObject, ObservableObject {
             guard let self = self else {
                 return
             }
-            guard let duration = self.currentSong?.duration else {
-                return
-            }
-            self.currentTime = CMTimeGetSeconds(time)
-            if duration > 0 {
-                self.progress = self.currentTime / duration
+            Task { @MainActor in
+                guard let duration = self.currentSong?.duration else {
+                    return
+                }
+                self.currentTime = CMTimeGetSeconds(time)
+                if duration > 0 {
+                    self.progress = self.currentTime / duration
+                }
             }
         }
     }

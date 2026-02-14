@@ -33,7 +33,9 @@ struct MiniPlayer: View {
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             let progress = min(max(value.location.x / geometry.size.width, 0), 1)
-                            audioManager.seek(toProgress: progress)
+                            Task {
+                                await audioManager.seek(toProgress: progress)
+                            }
                         }
                 )
             }
