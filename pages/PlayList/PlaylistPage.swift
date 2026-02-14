@@ -89,7 +89,7 @@ struct PlaylistPage: View {
             .navigationDestination(for: PlaylistRoute.self) { route in
                 switch route {
                 case .songDetail(let song):
-                    EmptyView()
+                    SongDetailView(song: song)
                 case .songs(let playlist):
                     SongsPage(playlist: playlist)
                 }

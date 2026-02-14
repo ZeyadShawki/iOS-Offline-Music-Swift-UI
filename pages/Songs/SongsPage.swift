@@ -58,6 +58,7 @@ struct SongsPage: View {
                     SongRow(song: song, onTap: {
                         audioManager.initQueue(songsQueue: songs,playlist: playlist)
                         audioManager.loadSong(song: song)
+                        appRouter.navigatePlaylist(to: .songDetail(song: song))
                     }, onAddToNextPlay: {
                         
                     }, onDelete: {

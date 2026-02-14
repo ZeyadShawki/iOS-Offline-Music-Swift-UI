@@ -1,5 +1,7 @@
 
 import Foundation
+import AVFoundation
+import UIKit
 
 class FileManagerHelper {
     private var fileManager : FileManager
@@ -96,6 +98,48 @@ class FileManagerHelper {
         return audioFiles.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
     }
     
+    func createDirectory(at url: URL) {
+        if !fileManager.fileExists(atPath: url.path) {
+            try? fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        }
+    }
+
+    func fileExists(at url: URL) -> Bool {
+        return fileManager.fileExists(atPath: url.path)
+    }
+
+    var temporaryDirectory: URL {
+        return fileManager.temporaryDirectory
+    }
+
+    /// Extract a thumbnail frame from a video file at ~1s and cache it as a JPEG
+    func generateVideoThumbnail(from videoURL: URL) -> URL? {
+        let thumbDir = temporaryDirectory.appendingPathComponent("thumbnails")
+        createDirectory(at: thumbDir)
+
+        let thumbName = sanitizeFilename(videoURL.deletingPathExtension().lastPathComponent) + ".jpg"
+        let thumbURL = thumbDir.appendingPathComponent(thumbName)
+
+        if fileExists(at: thumbURL) {
+            return thumbURL
+        }
+
+        let asset = AVURLAsset(url: videoURL)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 320, height: 320)
+
+        let time = CMTime(seconds: 1, preferredTimescale: 600)
+        guard let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) else {
+            return nil
+        }
+
+        let uiImage = UIImage(cgImage: cgImage)
+        guard let data = uiImage.jpegData(compressionQuality: 0.7) else { return nil }
+
+        return createFile(at: thumbURL, contents: data) ? thumbURL : nil
+    }
+
     func getFileSize(from fileURL: URL) -> Int {
         do {
             let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)

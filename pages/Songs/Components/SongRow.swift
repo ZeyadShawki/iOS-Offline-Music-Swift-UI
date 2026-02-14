@@ -33,7 +33,7 @@ struct SongRow: View {
             Text(song.title).font(.system(size: 16,weight: .medium)).foregroundColor(.primary)
                 .lineLimit(1)
             HStack(spacing: 16) {
-                Image(systemName: "music.note").font(.system(size: 12)).foregroundColor(.orange)
+                Image(systemName: "video.fill").font(.system(size: 12)).foregroundColor(.orange)
                 Text(song.artist).font(.system(size: 12)).foregroundColor(.secondary)
                 Text("|").font(.system(size: 12)).foregroundColor(.secondary)
                 Text(song.formattedDuration).font(.system(size: 12)).foregroundColor(.secondary)
@@ -53,9 +53,13 @@ struct SongRow: View {
                 } placeholder: {
                     thumbnailPlaceholder
                 }
-                
+            } else {
+                thumbnailPlaceholder
             }
         }
+        .frame(width: 50, height: 50)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.trailing, 8)
     }
     
     private var thumbnailPlaceholder: some View {

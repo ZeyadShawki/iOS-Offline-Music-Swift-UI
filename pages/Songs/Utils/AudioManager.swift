@@ -24,7 +24,7 @@ class AudioManager: NSObject, ObservableObject {
     @Published var currentIndex: Int = 0
     @Published var shuffleEnabled = false
     
-    private var player: AVPlayer?
+    private(set) var player: AVPlayer?
     private var playerItem: AVPlayerItem?
     private var timeObserver: Any?
     private var cancellables = Set<AnyCancellable>()
@@ -161,7 +161,11 @@ class AudioManager: NSObject, ObservableObject {
         NotificationCenter.default.removeObserver(self, name: AVPlayerItem.didPlayToEndTimeNotification, object: playerItem)
         
         playerItem = AVPlayerItem(url: audioURL)
-        player = AVPlayer(playerItem: playerItem)
+        if player == nil {
+            player = AVPlayer(playerItem: playerItem)
+        } else {
+            player?.replaceCurrentItem(with: playerItem)
+        }
         
         setupTimeObserver()
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: AVPlayerItem.didPlayToEndTimeNotification, object: playerItem)
