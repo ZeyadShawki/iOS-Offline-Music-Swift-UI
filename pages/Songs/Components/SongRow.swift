@@ -13,8 +13,9 @@ struct SongRow: View {
     let song: Song
     let onTap: () -> Void
     let onAddToNextPlay: () -> Void
+    let onAddToList: () -> Void
     let onDelete: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12, ){
             Button(action:onTap ,){
@@ -24,7 +25,7 @@ struct SongRow: View {
                 }
             }
             Spacer()
-            SongContextMenu(onAddNextPlay: {}, onDelete: {})
+            SongContextMenu(onAddNextPlay: onAddToNextPlay, onAddToList: onAddToList, onDelete: onDelete)
         }.frame(alignment: .leading)
     }
     
@@ -84,6 +85,7 @@ struct SongRow: View {
         ),
         onTap: {},
         onAddToNextPlay: {},
+        onAddToList: {},
         onDelete: {}
     )
 }

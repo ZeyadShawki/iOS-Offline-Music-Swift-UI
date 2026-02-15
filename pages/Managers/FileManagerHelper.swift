@@ -140,6 +140,44 @@ class FileManagerHelper {
         return createFile(at: thumbURL, contents: data) ? thumbURL : nil
     }
 
+    func deleteSongFile(at fileURL: URL) -> Bool {
+        do {
+            try fileManager.removeItem(at: fileURL)
+            return true
+        } catch {
+            print("Error deleting song file: \(error)")
+            return false
+        }
+    }
+
+    @discardableResult
+    func copySongFile(from sourceURL: URL, to destinationFolder: URL) -> Bool {
+        let filename = sourceURL.lastPathComponent
+        let destinationURL = destinationFolder.appendingPathComponent(filename)
+
+        if fileManager.fileExists(atPath: destinationURL.path) {
+            let name = sourceURL.deletingPathExtension().lastPathComponent
+            let ext = sourceURL.pathExtension
+            let uniqueName = generateUniqueFilename(name, ext: ext, in: destinationFolder)
+            let uniqueURL = destinationFolder.appendingPathComponent(uniqueName)
+            do {
+                try fileManager.copyItem(at: sourceURL, to: uniqueURL)
+                return true
+            } catch {
+                print("Error copying song file: \(error)")
+                return false
+            }
+        }
+
+        do {
+            try fileManager.copyItem(at: sourceURL, to: destinationURL)
+            return true
+        } catch {
+            print("Error copying song file: \(error)")
+            return false
+        }
+    }
+
     func getFileSize(from fileURL: URL) -> Int {
         do {
             let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)

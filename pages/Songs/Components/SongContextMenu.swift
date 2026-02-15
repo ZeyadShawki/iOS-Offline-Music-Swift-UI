@@ -10,9 +10,10 @@ import SwiftUI
 
 struct SongContextMenu: View {
     let onAddNextPlay: () -> Void
+    let onAddToList: () -> Void
     let onDelete: () -> Void
     @State private var showMenu = false
-    
+
     var body: some View {
         Button(action: {
             showMenu = true
@@ -21,8 +22,9 @@ struct SongContextMenu: View {
                           .font(.title)
         }.confirmationDialog("Options", isPresented: $showMenu) {
             Button("Add to Next Play", action: onAddNextPlay)
-            Button("Delete", action: onDelete)
-            Button("Cancel", action: {
+            Button("Add to List", action: onAddToList)
+            Button("Delete", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel, action: {
                 showMenu = false
             })
 
@@ -34,6 +36,7 @@ struct SongContextMenu_Previews: PreviewProvider {
     static var previews: some View {
         SongContextMenu(
             onAddNextPlay: { print("Add to Next Play") },
+            onAddToList: { print("Add to List") },
             onDelete: { print("Delete") }
         )
     }

@@ -29,9 +29,14 @@ class AudioManager: NSObject, ObservableObject {
     private var timeObserver: Any?
     private var cancellables = Set<AnyCancellable>()
     private let snapshotManager = SnapshotManager()
+    private var cachedArtwork: MPMediaItemArtwork?
+    private var cachedArtworkURL: URL?
 
     override init() {
         super.init()
+        setupAudioSession()
+        setupRemoteCommands()
+        setupNotifications()
     }
     
     deinit {
@@ -55,17 +60,17 @@ class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    private func setupRemoteCommands() async {
+    private func setupRemoteCommands() {
         let commandCenter = MPRemoteCommandCenter.shared()
-        
+
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in
             self?.resume()
             return .success
         }
-        
+
         commandCenter.pauseCommand.isEnabled = true
-        commandCenter.playCommand.addTarget { [weak self] _ in
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
             self?.pause()
             return .success
         }
@@ -182,11 +187,11 @@ class AudioManager: NSObject, ObservableObject {
     }
     
     func play(songs: [Song], startingAt index: Int = 0) {
-        guard index > songs.count - 1 else {
-            print("index out of range")
+        guard !songs.isEmpty else {
             return
         }
-        guard songs.isEmpty else {
+        guard index < songs.count else {
+            print("index out of range")
             return
         }
         if shuffleEnabled {
@@ -213,13 +218,15 @@ class AudioManager: NSObject, ObservableObject {
     }
     
     func resume() {
+        guard currentSong != nil, player != nil else { return }
         player?.play()
         isPlaying = true
         updateNowPlayingInfo()
     }
-    
+
     /// Toggle play/pause state
     func togglePlayPause() {
+        guard currentSong != nil else { return }
         if isPlaying {
             pause()
         } else {
@@ -285,6 +292,8 @@ class AudioManager: NSObject, ObservableObject {
         currentTime = 0
         progress = 0
         currentPlaylist = nil
+        cachedArtwork = nil
+        cachedArtworkURL = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
     
@@ -323,25 +332,29 @@ class AudioManager: NSObject, ObservableObject {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
             return
         }
-        guard let duration = currentSong?.duration else {
-            return
-        }
+
         var nowPlayingInfo: [String: Any] = [
             MPMediaItemPropertyTitle: song.title,
             MPMediaItemPropertyArtist: song.artist,
-            MPMediaItemPropertyPlaybackDuration: duration,
+            MPMediaItemPropertyPlaybackDuration: song.duration,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
         ]
-        // Add artwork if available
-         if let artworkURL = song.thumbnailImageUrl,
-            let imageData = try? Data(contentsOf: artworkURL),
-            let image = UIImage(data: imageData) {
-             let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-             nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
-         }
 
-         MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+        // Use cached artwork if it's for the same song, otherwise load and cache
+        if let artworkURL = song.thumbnailImageUrl {
+            if artworkURL == cachedArtworkURL, let artwork = cachedArtwork {
+                nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+            } else if let imageData = try? Data(contentsOf: artworkURL),
+                      let image = UIImage(data: imageData) {
+                let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                cachedArtwork = artwork
+                cachedArtworkURL = artworkURL
+                nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+            }
+        }
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
     }
     
     

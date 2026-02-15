@@ -75,9 +75,12 @@ struct DiscoveryPage : View {
                 }.task {
                     guard !hasLoaded else { return }
                     hasLoaded = true
-                    
                     playlist = initialPlaylist
                     await loadSongs()
+                }
+                .onAppear {
+                    guard hasLoaded else { return }
+                    Task { await loadSongs() }
                 }
     }
     

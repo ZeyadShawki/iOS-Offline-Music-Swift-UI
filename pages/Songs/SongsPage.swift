@@ -11,6 +11,8 @@ import SwiftUI
 struct SongsPage: View {
     let playlist: Playlist
     private let songManager = SongManager()
+    private let fileManager = FileManagerHelper()
+    private let playlistManager = PlaylistManager()
     @State private var songs: [Song] = []
 
     @State private var isLoading = true
@@ -18,6 +20,9 @@ struct SongsPage: View {
     @EnvironmentObject var appRouter: AppRouter
     @EnvironmentObject var audioManager: AudioManager
     @State var errorMessage: String?
+    @State private var showPlaylistPicker = false
+    @State private var selectedSongForList: Song?
+    @State private var availablePlaylists: [Playlist] = []
 
     init(playlist: Playlist, songs: [Song] = []) {
         self.playlist = playlist
@@ -38,7 +43,8 @@ struct SongsPage: View {
                     }
                 }
             }
-        }.padding(.horizontal).task {
+        }.padding(.horizontal)
+        .task {
             isLoading = true
             do {
                 songs = try await songManager.loadSongs(for: playlist)
@@ -48,6 +54,15 @@ struct SongsPage: View {
                 print("Other error: \(error)")
             }
             isLoading = false
+        }
+        .sheet(isPresented: $showPlaylistPicker) {
+            SongPlaylistPickerSheet(
+                playlists: availablePlaylists,
+                onSelect: { targetPlaylist in
+                    copyToPlaylist(song: selectedSongForList, playlist: targetPlaylist)
+                    showPlaylistPicker = false
+                }
+            )
         }
     }
     
@@ -60,27 +75,33 @@ struct SongsPage: View {
                         audioManager.loadSong(song: song)
                         appRouter.navigatePlaylist(to: .songDetail(song: song))
                     }, onAddToNextPlay: {
-                        
+                        audioManager.addToQueue(song: song)
+                    }, onAddToList: {
+                        selectedSongForList = song
+                        Task {
+                            availablePlaylists = await playlistManager.fetchPlaylists().filter { $0.id != playlist.id }
+                        }
+                        showPlaylistPicker = true
                     }, onDelete: {
-                        
+                        deleteSong(song)
                     }).padding(.vertical,10)
                     Divider()
                 }.swipeActions(edge: .trailing,allowsFullSwipe: true) {
                     Button(role: .destructive) {
-                        
+                        deleteSong(song)
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
                 }.swipeActions(edge: .leading) {
                     Button {
-                        
+                        audioManager.addToQueue(song: song)
                     } label: {
                         Label("Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                     }
                     .tint(.orange)
                 }
             }
-    
+
         }
     }
     
@@ -104,7 +125,66 @@ struct SongsPage: View {
                 .foregroundColor(.secondary)
         }
         .padding(.bottom, 20)
-        
+
+    }
+
+    private func deleteSong(_ song: Song) {
+        guard let audioURL = song.audioURL else { return }
+        if fileManager.deleteSongFile(at: audioURL) {
+            withAnimation {
+                songs.removeAll { $0.id == song.id }
+            }
+            if audioManager.currentSong?.id == song.id {
+                audioManager.next()
+            }
+            audioManager.queue.removeAll { $0.id == song.id }
+        }
+    }
+
+    private func copyToPlaylist(song: Song?, playlist targetPlaylist: Playlist) {
+        guard let song = song,
+              let sourceURL = song.audioURL,
+              let destinationFolder = targetPlaylist.folderPath else { return }
+        fileManager.copySongFile(from: sourceURL, to: destinationFolder)
+    }
+}
+
+struct SongPlaylistPickerSheet: View {
+    let playlists: [Playlist]
+    let onSelect: (Playlist) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List(playlists) { playlist in
+                Button(action: {
+                    onSelect(playlist)
+                    dismiss()
+                }) {
+                    HStack(spacing: 12) {
+                        Image(systemName: playlist.iconName)
+                            .font(.title2)
+                            .foregroundColor(playlist.overlayColor)
+                            .frame(width: 40, height: 40)
+                        VStack(alignment: .leading) {
+                            Text(playlist.name)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            Text("\(playlist.songCount) songs")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Add to List")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
     }
 }
 
